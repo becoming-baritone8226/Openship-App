@@ -1,0 +1,32 @@
+# EditorConfig — https://editorconfig.org
+# Ensures consistent formatting across editors and AI agents
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+max_line_length = 120
+
+[*.{kt,kts}]
+# Kotlin — follows official Kotlin Coding Conventions
+indent_size = 4
+continuation_indent_size = 8
+# ktlint-compatible: no wildcard imports, import ordering enforced
+ij_kotlin_imports_layout = *
+ij_kotlin_name_count_to_use_star_import = 2147483647
+ij_kotlin_name_count_to_use_star_import_for_members = 2147483647
+
+[*.{xml,json,jsonc,toml,yaml,yml,gradle,properties}]
+indent_size = 2
+
+[*.{md,markdown}]
+trim_trailing_whitespace = false
+max_line_length = off
+
+[Makefile]
+indent_style = tab
