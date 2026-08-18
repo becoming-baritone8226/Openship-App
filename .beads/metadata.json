@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "Openship_App",
+  "project_id": "f5d932a0-dc32-4012-bd57-ac7ee68066ac"
+}
