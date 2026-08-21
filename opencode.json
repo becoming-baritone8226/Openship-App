@@ -4,10 +4,6 @@
     "AGENTS.md"
   ],
   "permission": {
-    "read": "allow",
-    "glob": "allow",
-    "grep": "allow",
-    "list": "allow",
     "edit": "ask",
     "bash": {
       "./gradlew *": "allow",
@@ -15,8 +11,8 @@
       "git status": "allow",
       "git diff *": "allow",
       "git log *": "allow",
-      "git add *": "allow",
-      "git commit *": "allow",
+      "git add *": "ask",
+      "git commit *": "ask",
       "bd *": "allow",
       "toon *": "allow",
       "*": "ask"

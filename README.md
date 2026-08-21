@@ -2,11 +2,25 @@
 
 An unofficial Android client for [Openship](https://github.com/oblien/openship), the open-source self-hostable deployment platform with CI/CD. Built with Kotlin Multiplatform (KMP) and Compose Multiplatform, using the **Model Context Protocol (MCP)** as the primary API layer and **Server-Sent Events (SSE)** for real-time streaming.
 
-> **Status**: Planning / pre-implementation. This document is the complete build guide.
+> **Status**: In Active Development (Phase 1: Foundations & Slices).
 >
 > **License**: Apache-2.0 (matches Openship, Kotlin MCP SDK, Ktor, Compose Multiplatform — no conflicts)
 >
 > **Relationship to Openship**: Unofficial community client. Built with the founder's blessing. Governance (official vs endorsed) decided after the founder sees a working base version.
+
+---
+
+## 🚀 Live Progress & Implementation Status
+
+| Milestone / Slice | Status | Key Deliverables |
+|---|---|---|
+| **Phase 0: Study & Alignment** | ✅ Completed | Completed study guide, `/grill-me` architectural interview & decisions locked. |
+| **Phase 1: Agent Skills Setup** | ✅ Completed | Installed 7 Superpowers skills + 5 KMP agent skills into `.agents/skills/`. |
+| **Phase 1: Dependency Setup** | ✅ Completed | Pinned Ktor 3.1.1, MCP SDK 0.15.0, Koin 4.0.2, kotlinx.serialization 1.8.0, Security Crypto, OkHttp, Network Security config. |
+| **Slice 1: Foundations & Connect** | ✅ Completed | Tolerant Models, Encrypted TokenStorage, HttpClientFactory, Connect Screen & Discovery probe. |
+| **Slice 2: Projects & Switcher** | ✅ Completed | ProjectsRepository, ProjectsViewModel, 1:1 Openship ProjectCards, Multi-Instance Switcher Dropdown, Pull-to-refresh. |
+| **Slice 3: Live Deploy Logs** | ✅ Completed | SSE Deploy Stream, Base64 decoding, ANSI color parsing, Stage Stepper, Monospace Terminal, Light/Dark themes. |
+| **Slice 4: Live Server Monitor** | ✅ Completed | Real 3s SSE Telemetry Stream, Animated Circular Gauges (CPU, RAM, Disk), Live Rolling Sparklines, Load Averages & Uptime. |
 
 ---
 

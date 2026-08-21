@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kotlinSerialization)
 }
 
 kotlin {
@@ -31,20 +32,51 @@ kotlin {
     }
 
     sourceSets {
-        androidMain.dependencies {
-            implementation(libs.compose.uiToolingPreview)
-            implementation(libs.compose.uiTooling)
-        }
         commonMain.dependencies {
+            // Compose Multiplatform
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
+            implementation(compose.materialIconsExtended)
             implementation(libs.compose.ui)
             implementation(libs.compose.components.resources)
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(libs.navigation.compose)
+
+            // Coroutines & Serialization
+            implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.serialization.json)
+
+            // Ktor Client (includes SSE in core)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.ktor.client.logging)
+
+            // Kotlin MCP SDK Client
+            implementation(libs.mcp.sdk.client)
+
+            // Koin Dependency Injection
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose)
+            implementation(libs.koin.compose.viewmodel)
         }
+
+        androidMain.dependencies {
+            // Platform Engines & Security
+            implementation(libs.ktor.client.okhttp)
+            implementation(libs.okhttp)
+            implementation(libs.androidx.security.crypto)
+            implementation(libs.koin.android)
+            implementation(libs.kotlinx.coroutines.android)
+
+            // Compose UI Tooling for Android
+            implementation(libs.compose.uiToolingPreview)
+            implementation(libs.compose.uiTooling)
+        }
+
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }

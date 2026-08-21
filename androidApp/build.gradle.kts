@@ -10,10 +10,17 @@ kotlin {
         jvmTarget = JvmTarget.JVM_11
     }
 }
+
 dependencies {
     implementation(project(":shared"))
 
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.core.ktx)
+
+    implementation(libs.koin.android)
+    implementation(libs.koin.compose)
+    implementation(libs.koin.compose.viewmodel)
 
     implementation(libs.compose.uiToolingPreview)
     debugImplementation(libs.compose.uiTooling)
@@ -51,4 +58,18 @@ android {
     buildFeatures {
         compose = true
     }
+}
+
+// Auto-run adb reverse on every install task so USB debugging works automatically without manual commands
+tasks.register("reverseAdbPorts") {
+    doLast {
+        try {
+            ProcessBuilder("adb", "reverse", "tcp:4000", "tcp:4000").start().waitFor()
+            ProcessBuilder("adb", "reverse", "tcp:20000", "tcp:20000").start().waitFor()
+        } catch (_: Exception) {}
+    }
+}
+
+tasks.matching { it.name.startsWith("install") || it.name.startsWith("connected") }.configureEach {
+    finalizedBy("reverseAdbPorts")
 }
