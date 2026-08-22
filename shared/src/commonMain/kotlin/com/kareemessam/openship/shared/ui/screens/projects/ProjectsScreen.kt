@@ -21,11 +21,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kareemessam.openship.shared.model.ProjectStatus
 import com.kareemessam.openship.shared.model.ProjectSummary
-import com.kareemessam.openship.shared.ui.components.InstanceSwitcherDropdown
 import com.kareemessam.openship.shared.ui.components.OpenshipTopBar
 import com.kareemessam.openship.shared.ui.components.ProjectCard
 import com.kareemessam.openship.shared.ui.theme.OpenshipAppTheme
 import com.kareemessam.openship.shared.viewmodel.ProjectsUiState
+
+import com.kareemessam.openship.shared.ui.components.InstanceSwitcherModal
 
 enum class ProjectFilterTab {
     ALL,
@@ -46,6 +47,7 @@ fun ProjectsScreen(
 ) {
     val colors = OpenshipAppTheme.colors
     var selectedFilter by remember { mutableStateOf(ProjectFilterTab.ALL) }
+    var isInstanceModalOpen by remember { mutableStateOf(false) }
 
     val displayedProjects = remember(state.filteredProjects, selectedFilter) {
         when (selectedFilter) {
@@ -55,12 +57,21 @@ fun ProjectsScreen(
         }
     }
 
+    InstanceSwitcherModal(
+        isOpen = isInstanceModalOpen,
+        activeInstance = state.activeInstance,
+        allInstances = state.allInstances,
+        onDismiss = { isInstanceModalOpen = false },
+        onInstanceSelected = onInstanceSelected,
+        onAddInstanceClicked = onAddInstanceClicked
+    )
+
     Scaffold(
         topBar = {
             Column(modifier = Modifier.background(colors.bgPage)) {
                 OpenshipTopBar(
                     instanceLabel = state.activeInstance?.label,
-                    onSwitchInstance = { /* Dropdown opens */ }
+                    onSwitchInstance = { isInstanceModalOpen = true }
                 )
             }
         },
@@ -80,32 +91,19 @@ fun ProjectsScreen(
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Section Header & Add Server Action
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "Projects",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 22.sp,
-                            color = colors.textHeading,
-                            letterSpacing = (-0.4).sp
-                        )
-                        Text(
-                            text = "${state.projects.size} deployed service${if (state.projects.size == 1) "" else "s"}",
-                            fontSize = 12.sp,
-                            color = colors.textMuted
-                        )
-                    }
-
-                    InstanceSwitcherDropdown(
-                        activeInstance = state.activeInstance,
-                        allInstances = state.allInstances,
-                        onInstanceSelected = onInstanceSelected,
-                        onAddInstanceClicked = onAddInstanceClicked
+                // Section Header
+                Column {
+                    Text(
+                        text = "Projects",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 22.sp,
+                        color = colors.textHeading,
+                        letterSpacing = (-0.4).sp
+                    )
+                    Text(
+                        text = "${state.projects.size} deployed service${if (state.projects.size == 1) "" else "s"}",
+                        fontSize = 12.sp,
+                        color = colors.textMuted
                     )
                 }
 

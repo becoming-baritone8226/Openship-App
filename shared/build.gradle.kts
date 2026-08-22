@@ -55,7 +55,7 @@ kotlin {
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.logging)
 
-            // Kotlin MCP SDK Client
+            // MCP client foundation
             implementation(libs.mcp.sdk.client)
 
             // Koin Dependency Injection

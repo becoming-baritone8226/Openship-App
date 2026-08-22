@@ -11,13 +11,13 @@
 - **Status**: Pre-implementation (base version v0.1.0 — read-only)
 - **Relationship**: Unofficial community client, built with the Openship founder's blessing
 
-## Architecture
+## Architecture & Protocol Strategy
 
 ```
 androidApp/ (Android only)          shared/ (KMP)
 ┌──────────────────────┐            ┌──────────────────────────────┐
 │  Compose UI          │            │  commonMain/                 │
-│  - Screens           │───────────▶│  - client/ (MCP, SSE, HTTP)  │
+│  - Screens           │───────────▶│  - client/ (REST, SSE, MCP)  │
 │  - Navigation        │            │  - model/ (data classes)     │
 │  - ViewModels        │            │  - repository/               │
 │  - Koin DI           │            │  - util/                     │
@@ -28,17 +28,16 @@ androidApp/ (Android only)          shared/ (KMP)
                                     └──────────────────────────────┘
 ```
 
-**Two-layer API design**:
-- **MCP** (`/api/mcp`) — discrete operations: health check, list projects, future actions. Uses official Kotlin MCP SDK (`io.modelcontextprotocol:kotlin-sdk-client` 0.15.0) with `StreamableHttpClientTransport`.
-- **SSE** (Ktor SSE plugin) — real-time streams: build/deploy logs (`/api/deployments/:id/stream`), monitoring (`/api/system/monitor/stream`).
-- **One shared `HttpClient`** for both layers — fewer sockets, consistent auth.
+**Phased API design**:
+- **Phase 1 (Active — Base v0.1.0)**: Resilient REST endpoints (`/api/health/env`, `/api/projects`, `/api/deployments`, `/api/system/servers`) with parallelized coroutine fetching + **SSE** (Ktor SSE plugin) for real-time streams: build/deploy logs (`/api/deployments/:id/stream`) and host monitoring (`/api/system/monitor/stream`).
+- **Phase 2 (Roadmap — v0.2.0+)**: **Model Context Protocol (MCP)** (`/api/mcp`) for AI-native agent tooling and automated operations using the official Kotlin MCP SDK (`io.modelcontextprotocol:kotlin-sdk-client` 0.15.0).
+- **One shared `HttpClient`** with infinite timeouts on streaming channels and AES-256 token persistence.
 
-## Key Decisions (Locked)
+## Key Decisions
 
-1. **Scope**: Connect + List Projects + Live Build Logs (SSE) + Live Monitoring (SSE). All read-only.
-2. **Platform**: Android only. iOS deferred (KMP architecture allows adding `iosMain` later without rewrite).
-3. **API layer**: MCP from the start (AI-native angle, official Kotlin SDK, cuts integration surface).
-4. **Architecture**: MCP for discrete ops + SSE for streams, shared Ktor HttpClient.
+1. **Scope**: Connect + Parallel Projects Discovery + Live Build Logs (SSE) + Live Monitoring (SSE with Cloud Mode detection). Read-only for v0.1.0.
+2. **Platform**: Android only for base target; KMP architecture allows seamless future `iosMain` target addition.
+3. **API layer**: Phase 1 REST + SSE foundation; Phase 2 MCP SDK tool client.
 
 ## Tech Stack
 
@@ -50,13 +49,13 @@ androidApp/ (Android only)          shared/ (KMP)
 | compileSdk / targetSdk | 36 | ✅ Configured |
 | minSdk | 24 | ✅ Configured |
 | JDK toolchain | 21 (Zulu) | ✅ Configured |
-| Ktor Client | 3.5.2 | ❌ **Not yet added** |
-| kotlinx.serialization | 1.11.0 | ❌ **Not yet added** |
-| Kotlin MCP SDK Client | 0.15.0 | ❌ **Not yet added** |
-| Koin | 4.x | ❌ **Not yet added** |
-| AndroidX Security | 1.1.0-alpha06 | ❌ **Not yet added** |
-| OkHttp | 4.12.x | ❌ **Not yet added** |
-| Navigation Compose | 2.8.x | ❌ **Not yet added** |
+| Ktor Client | 3.1.1 | ✅ Configured & Active |
+| kotlinx.serialization | 1.8.0 | ✅ Configured & Active |
+| Kotlin MCP SDK Client | 0.15.0 | ✅ Configured (Phase 2) |
+| Koin | 4.0.2 | ✅ Configured & Active |
+| AndroidX Security Crypto | 1.1.0-alpha06 | ✅ Configured & Active |
+| OkHttp | 4.12.0 | ✅ Configured & Active |
+| Navigation Compose | 2.8.0-alpha10 | ✅ Configured & Active |
 
 > **When adding dependencies**: Add to `gradle/libs.versions.toml` version catalog first, then reference in module `build.gradle.kts`. Never hardcode versions in build scripts.
 

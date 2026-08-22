@@ -1,7 +1,8 @@
 package com.kareemessam.openship.shared.util
 
 class SeqTracker {
-    private var lastSeq: Long = 0L
+    var lastSeq: Long = 0L
+        private set
 
     fun update(seq: Long) {
         if (seq > lastSeq) {
@@ -15,3 +16,4 @@ class SeqTracker {
         lastSeq = 0L
     }
 }
+

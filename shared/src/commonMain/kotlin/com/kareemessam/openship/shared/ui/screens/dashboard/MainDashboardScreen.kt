@@ -104,7 +104,9 @@ fun MainDashboardScreen(
                     )
                 }
                 DashboardTab.MONITOR -> {
-                    ServerMonitorScreen()
+                    ServerMonitorScreen(
+                        onAddInstanceClicked = onAddInstanceClicked
+                    )
                 }
             }
         }

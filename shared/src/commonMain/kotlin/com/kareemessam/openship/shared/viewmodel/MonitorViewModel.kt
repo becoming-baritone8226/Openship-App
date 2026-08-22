@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 
 data class MonitorUiState(
     val activeInstance: InstanceConfig? = null,
+    val allInstances: List<InstanceConfig> = emptyList(),
     val activeServer: ServerItemDto? = null,
     val allServers: List<ServerItemDto> = emptyList(),
     val currentStats: MonitorStatsDto? = null,
@@ -23,6 +24,7 @@ data class MonitorUiState(
     val memHistory: List<Float> = emptyList(),
     val isLoading: Boolean = false,
     val isStreaming: Boolean = false,
+    val isCloudMode: Boolean = false,
     val error: String? = null
 )
 
@@ -42,9 +44,29 @@ class MonitorViewModel(
     }
 
     fun loadServersAndStartMonitoring() {
-        val activeInstance = tokenStorage.getActiveInstance() ?: return
+        val instances = tokenStorage.loadInstances()
+        val activeInstance = tokenStorage.getActiveInstance() ?: instances.firstOrNull()
 
-        _state.update { it.copy(activeInstance = activeInstance, isLoading = true, error = null) }
+        if (activeInstance == null) {
+            _state.update { it.copy(activeInstance = null, allInstances = instances, isLoading = false) }
+            return
+        }
+
+        val isCloud = activeInstance.authMode.equals("cloud", ignoreCase = true)
+        _state.update {
+            it.copy(
+                activeInstance = activeInstance,
+                allInstances = instances,
+                isCloudMode = isCloud,
+                isLoading = !isCloud,
+                error = null
+            )
+        }
+
+        if (isCloud) {
+            // Cloud instances use cloud sandboxes; host-level SSH telemetry is not exposed
+            return
+        }
 
         viewModelScope.launch {
             val result = monitorRepository.getServers(activeInstance)
@@ -54,21 +76,33 @@ class MonitorViewModel(
                     it.copy(
                         isLoading = false,
                         allServers = servers,
-                        activeServer = primaryServer
+                        activeServer = primaryServer,
+                        isCloudMode = false,
+                        error = null
                     )
                 }
                 if (primaryServer != null) {
                     startStreaming(activeInstance, primaryServer.id)
                 }
             }.onFailure { err ->
+                val msg = err.message ?: ""
+                val cloudDetected = msg.contains("404") || msg.contains("Not available", ignoreCase = true)
                 _state.update {
                     it.copy(
                         isLoading = false,
-                        error = err.message ?: "Failed to load servers."
+                        isCloudMode = cloudDetected,
+                        error = if (cloudDetected) null else (err.message ?: "Failed to load servers.")
                     )
                 }
             }
         }
+    }
+
+    fun switchInstance(instanceId: String) {
+        streamJob?.cancel()
+        tokenStorage.setActiveInstance(instanceId)
+        _state.update { it.copy(cpuHistory = emptyList(), memHistory = emptyList(), currentStats = null) }
+        loadServersAndStartMonitoring()
     }
 
     fun selectServer(serverId: String) {

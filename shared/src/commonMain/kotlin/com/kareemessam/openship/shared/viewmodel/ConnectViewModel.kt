@@ -91,11 +91,6 @@ class ConnectViewModel(
             return
         }
 
-        if (pat.isNotEmpty() && !pat.startsWith("opsh_pat_") && !pat.startsWith("opsh_")) {
-            _state.update { it.copy(connectError = "Invalid PAT format. Tokens typically begin with 'opsh_pat_'.") }
-            return
-        }
-
         viewModelScope.launch {
             _state.update { it.copy(isConnecting = true, connectError = null) }
             try {

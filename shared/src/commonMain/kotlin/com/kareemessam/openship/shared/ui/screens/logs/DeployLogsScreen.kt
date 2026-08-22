@@ -50,27 +50,10 @@ fun DeployLogsScreen(
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
 
-    // Smart auto-scroll effect
+    // Auto-scroll effect controlled strictly by autoScroll flag
     LaunchedEffect(state.filteredLogs.size, state.autoScroll) {
         if (state.autoScroll && state.filteredLogs.isNotEmpty()) {
-            listState.animateScrollToItem(state.filteredLogs.size - 1)
-        }
-    }
-
-    // Detect user manual scroll to toggle auto-scroll
-    val isScrolledToBottom by remember {
-        derivedStateOf {
-            val layoutInfo = listState.layoutInfo
-            val totalItems = layoutInfo.totalItemsCount
-            if (totalItems == 0) return@derivedStateOf true
-            val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            lastVisible >= totalItems - 2
-        }
-    }
-
-    LaunchedEffect(isScrolledToBottom) {
-        if (!isScrolledToBottom && state.autoScroll) {
-            onAutoScrollChanged(false)
+            listState.scrollToItem(state.filteredLogs.size - 1)
         }
     }
 
@@ -105,6 +88,17 @@ fun DeployLogsScreen(
                     }
                 },
                 actions = {
+                    // Auto-Scroll Toggle Button
+                    IconButton(
+                        onClick = { onAutoScrollChanged(!state.autoScroll) }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.VerticalAlignBottom,
+                            contentDescription = "Auto Scroll",
+                            tint = if (state.autoScroll) colors.statusActive else colors.textMuted
+                        )
+                    }
+
                     // Status Badge
                     val statusKind = when (state.finalStatus?.lowercase()) {
                         "ready", "active", "success" -> StatusKind.SUCCESS
@@ -335,7 +329,7 @@ fun DeployLogsScreen(
                     }
 
                     // Floating Auto-Scroll Resume Button
-                    if (!isScrolledToBottom && state.filteredLogs.isNotEmpty()) {
+                    if (!state.autoScroll && state.filteredLogs.isNotEmpty()) {
                         FloatingActionButton(
                             onClick = {
                                 onAutoScrollChanged(true)

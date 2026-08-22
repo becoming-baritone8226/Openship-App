@@ -15,7 +15,7 @@ import org.koin.dsl.module
 val sharedModule = module {
     single { HttpClientFactory.create() }
     single { DiscoveryService(get()) }
-    single { ProjectsRepository(get(), get(), get()) }
+    single { ProjectsRepository(get(), get()) }
     single { DeployLogsRepository(get(), get()) }
     single { MonitorRepository(get(), get()) }
     viewModel { ConnectViewModel(get(), get()) }

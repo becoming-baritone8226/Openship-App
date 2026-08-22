@@ -36,12 +36,16 @@ object AnsiParser {
             for (match in matches) {
                 if (match.range.first > currentIndex) {
                     val rawChunk = text.substring(currentIndex, match.range.first)
-                    withStyle(
-                        SpanStyle(
-                            color = currentColor,
-                            fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal
-                        )
-                    ) {
+                    if (currentColor != defaultColor || isBold) {
+                        withStyle(
+                            SpanStyle(
+                                color = currentColor,
+                                fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal
+                            )
+                        ) {
+                            append(rawChunk)
+                        }
+                    } else {
                         append(rawChunk)
                     }
                 }
@@ -82,12 +86,16 @@ object AnsiParser {
 
             if (currentIndex < text.length) {
                 val remaining = text.substring(currentIndex)
-                withStyle(
-                    SpanStyle(
-                        color = currentColor,
-                        fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal
-                    )
-                ) {
+                if (currentColor != defaultColor || isBold) {
+                    withStyle(
+                        SpanStyle(
+                            color = currentColor,
+                            fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal
+                        )
+                    ) {
+                        append(remaining)
+                    }
+                } else {
                     append(remaining)
                 }
             }

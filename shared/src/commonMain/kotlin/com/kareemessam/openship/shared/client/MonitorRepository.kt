@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.Json
 
+import io.ktor.client.plugins.timeout
+
 class MonitorRepository(
     private val httpClient: HttpClient,
     private val discoveryService: DiscoveryService,
@@ -39,6 +41,10 @@ class MonitorRepository(
             httpClient.sse(
                 urlString = url,
                 request = {
+                    timeout {
+                        socketTimeoutMillis = Long.MAX_VALUE
+                        requestTimeoutMillis = Long.MAX_VALUE
+                    }
                     if (instance.pat.isNotBlank()) {
                         header(HttpHeaders.Authorization, "Bearer ${instance.pat}")
                     }

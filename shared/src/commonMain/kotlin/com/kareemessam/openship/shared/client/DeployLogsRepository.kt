@@ -2,26 +2,15 @@ package com.kareemessam.openship.shared.client
 
 import com.kareemessam.openship.shared.model.InstanceConfig
 import com.kareemessam.openship.shared.model.sse.DeployStreamEvent
-import com.kareemessam.openship.shared.util.Base64Decoder
 import com.kareemessam.openship.shared.util.SeqTracker
 import io.ktor.client.*
 import io.ktor.client.plugins.sse.*
+import io.ktor.client.plugins.timeout
 import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
-
-data class DecodedLogEntry(
-    val eventId: Long,
-    val text: String,
-    val step: String?,
-    val stepStatus: String?,
-    val level: String?,
-    val serviceName: String?
-)
 
 class DeployLogsRepository(
     private val httpClient: HttpClient,
@@ -42,6 +31,10 @@ class DeployLogsRepository(
             httpClient.sse(
                 urlString = url,
                 request = {
+                    timeout {
+                        socketTimeoutMillis = Long.MAX_VALUE
+                        requestTimeoutMillis = Long.MAX_VALUE
+                    }
                     if (instance.pat.isNotBlank()) {
                         header(HttpHeaders.Authorization, "Bearer ${instance.pat}")
                     }

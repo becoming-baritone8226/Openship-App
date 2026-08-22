@@ -4,24 +4,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kareemessam.openship.shared.ui.components.CircularMetricGauge
+import com.kareemessam.openship.shared.ui.components.InstanceSwitcherModal
 import com.kareemessam.openship.shared.ui.components.MacWindowDots
 import com.kareemessam.openship.shared.ui.components.OpenshipTopBar
 import com.kareemessam.openship.shared.ui.components.SparklineTrendCard
@@ -33,19 +28,30 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun ServerMonitorScreen(
+    onAddInstanceClicked: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: MonitorViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
     val colors = OpenshipAppTheme.colors
     val stats = state.currentStats
+    var isInstanceModalOpen by remember { mutableStateOf(false) }
+
+    InstanceSwitcherModal(
+        isOpen = isInstanceModalOpen,
+        activeInstance = state.activeInstance,
+        allInstances = state.allInstances,
+        onDismiss = { isInstanceModalOpen = false },
+        onInstanceSelected = viewModel::switchInstance,
+        onAddInstanceClicked = onAddInstanceClicked
+    )
 
     Scaffold(
         topBar = {
             Column(modifier = Modifier.background(colors.bgPage)) {
                 OpenshipTopBar(
                     instanceLabel = state.activeInstance?.label,
-                    onSwitchInstance = { /* Dropdown */ }
+                    onSwitchInstance = { isInstanceModalOpen = true }
                 )
             }
         },
@@ -75,161 +81,256 @@ fun ServerMonitorScreen(
                         letterSpacing = (-0.4).sp
                     )
                     Text(
-                        text = "Real-time host telemetry & metrics",
+                        text = if (state.isCloudMode) "Openship Cloud telemetry overview" else "Real-time host telemetry & metrics",
                         fontSize = 12.sp,
                         color = colors.textMuted
                     )
                 }
 
                 StatusBadge(
-                    text = if (state.isStreaming) "Telemetry Live" else "Connecting",
-                    kind = if (state.isStreaming) StatusKind.SUCCESS else StatusKind.WARNING,
+                    text = when {
+                        state.isCloudMode -> "Cloud Mode"
+                        state.isStreaming -> "Telemetry Live"
+                        state.isLoading -> "Connecting"
+                        else -> "Idle"
+                    },
+                    kind = when {
+                        state.isCloudMode -> StatusKind.INFO
+                        state.isStreaming -> StatusKind.SUCCESS
+                        else -> StatusKind.WARNING
+                    },
                     pulseDot = state.isStreaming
                 )
             }
 
-            // Server Metadata Card
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(colors.bgCard)
-                    .border(1.dp, colors.borderCard, RoundedCornerShape(16.dp))
-                    .padding(18.dp)
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        MacWindowDots()
-
-                        if (stats != null && stats.uptimeSeconds > 0) {
-                            val uptimeStr = formatUptime(stats.uptimeSeconds)
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            if (state.isCloudMode) {
+                // Cloud Mode Notice Card
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(colors.bgCard)
+                        .border(1.dp, colors.borderCard, RoundedCornerShape(16.dp))
+                        .padding(20.dp)
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(colors.bgPill)
+                                    .border(1.dp, colors.borderSubtle, RoundedCornerShape(10.dp)),
+                                contentAlignment = Alignment.Center
                             ) {
+                                Text(text = "☁️", fontSize = 20.sp)
+                            }
+
+                            Column {
                                 Text(
-                                    text = "Uptime: $uptimeStr",
+                                    text = "Openship Cloud Instance",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    color = colors.textHeading
+                                )
+                                Text(
+                                    text = "Managed Container Environment",
                                     fontSize = 11.sp,
-                                    fontFamily = FontFamily.Monospace,
-                                    color = colors.textSecondary
+                                    color = colors.textMuted
                                 )
                             }
                         }
-                    }
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(colors.bgPill)
-                                .border(1.dp, colors.borderSubtle, RoundedCornerShape(10.dp)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(text = "🖥️", fontSize = 18.sp)
-                        }
-
-                        Column {
-                            Text(
-                                text = state.activeServer?.name ?: "This Server",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp,
-                                color = colors.textHeading
-                            )
-                            Text(
-                                text = "Deploy Mode: Docker · Host: ${state.activeInstance?.url ?: "localhost"}",
-                                fontSize = 11.sp,
-                                color = colors.textMuted
-                            )
-                        }
+                        Text(
+                            text = "Live host telemetry (CPU/RAM/Disk via SSH) is designed for self-hosted instances. On Openship Cloud, deployments run in managed sandboxes. You can monitor your active project deployments directly in the Projects tab.",
+                            fontSize = 13.sp,
+                            lineHeight = 18.sp,
+                            color = colors.textSecondary
+                        )
                     }
                 }
-            }
-
-            // 3 Circular Gauges: CPU, Memory, Disk
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                val cpuVal = stats?.cpu?.toFloat() ?: 0f
-                CircularMetricGauge(
-                    percentage = cpuVal,
-                    label = "CPU",
-                    valueSubtext = "${cpuVal.toInt()}% load",
-                    modifier = Modifier.weight(1f)
-                )
-
-                val memPercent = stats?.memPercentage ?: 0f
-                val memUsedGb = formatBytesToGb(stats?.memUsed ?: 0L)
-                val memTotalGb = formatBytesToGb(stats?.memTotal ?: 0L)
-                CircularMetricGauge(
-                    percentage = memPercent,
-                    label = "RAM",
-                    valueSubtext = "$memUsedGb / $memTotalGb GB",
-                    modifier = Modifier.weight(1f)
-                )
-
-                val diskPercent = stats?.diskPercentage ?: 0f
-                val diskUsedGb = formatBytesToGb(stats?.diskUsed ?: 0L)
-                val diskTotalGb = formatBytesToGb(stats?.diskTotal ?: 0L)
-                CircularMetricGauge(
-                    percentage = diskPercent,
-                    label = "Disk",
-                    valueSubtext = "$diskUsedGb / $diskTotalGb GB",
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            // Rolling Live Sparkline Trend Graphs
-            val currentCpuStr = "${(stats?.cpu ?: 0.0).toInt()}%"
-            SparklineTrendCard(
-                title = "CPU Utilization Trend",
-                currentValue = currentCpuStr,
-                history = state.cpuHistory,
-                lineColor = colors.statusActive
-            )
-
-            val currentMemStr = "${(stats?.memPercentage ?: 0f).toInt()}% (${formatBytesToGb(stats?.memUsed ?: 0L)} GB)"
-            SparklineTrendCard(
-                title = "Memory Utilization Trend",
-                currentValue = currentMemStr,
-                history = state.memHistory,
-                lineColor = colors.info.solid
-            )
-
-            // System Load Average Pills
-            if (stats != null) {
+            } else if (state.error != null) {
+                // Error Card
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(14.dp))
                         .background(colors.bgCard)
-                        .border(1.dp, colors.borderCard, RoundedCornerShape(14.dp))
+                        .border(1.dp, colors.statusFailed.copy(alpha = 0.3f), RoundedCornerShape(14.dp))
                         .padding(16.dp)
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
-                            text = "SYSTEM LOAD AVERAGES",
-                            fontSize = 11.sp,
+                            text = "Failed to load telemetry",
                             fontWeight = FontWeight.Bold,
-                            color = colors.textMuted,
-                            letterSpacing = 0.5.sp
+                            color = colors.statusFailed,
+                            fontSize = 14.sp
                         )
-
+                        Text(
+                            text = state.error ?: "Unable to reach server telemetry stream.",
+                            fontSize = 12.sp,
+                            color = colors.textMuted
+                        )
+                        Button(
+                            onClick = { viewModel.loadServersAndStartMonitoring() },
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colors.bgPill,
+                                contentColor = colors.textHeading
+                            ),
+                            modifier = Modifier.padding(top = 4.dp)
+                        ) {
+                            Text("Retry", fontSize = 12.sp)
+                        }
+                    }
+                }
+            } else {
+                // Server Metadata Card
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(colors.bgCard)
+                        .border(1.dp, colors.borderCard, RoundedCornerShape(16.dp))
+                        .padding(18.dp)
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            LoadPill(label = "1 min", value = "${stats.load1Val}", modifier = Modifier.weight(1f))
-                            LoadPill(label = "5 min", value = "${stats.load5Val}", modifier = Modifier.weight(1f))
-                            LoadPill(label = "15 min", value = "${stats.load15Val}", modifier = Modifier.weight(1f))
+                            MacWindowDots()
+
+                            if (stats != null && stats.uptimeSeconds > 0) {
+                                val uptimeStr = formatUptime(stats.uptimeSeconds)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Text(
+                                        text = "Uptime: $uptimeStr",
+                                        fontSize = 11.sp,
+                                        fontFamily = FontFamily.Monospace,
+                                        color = colors.textSecondary
+                                    )
+                                }
+                            }
+                        }
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(colors.bgPill)
+                                    .border(1.dp, colors.borderSubtle, RoundedCornerShape(10.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(text = "🖥️", fontSize = 18.sp)
+                            }
+
+                            Column {
+                                Text(
+                                    text = state.activeServer?.name ?: "This Server",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    color = colors.textHeading
+                                )
+                                Text(
+                                    text = "Deploy Mode: Docker · Host: ${state.activeInstance?.url ?: "localhost"}",
+                                    fontSize = 11.sp,
+                                    color = colors.textMuted
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // 3 Circular Gauges: CPU, Memory, Disk
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    val cpuVal = stats?.cpu?.toFloat() ?: 0f
+                    CircularMetricGauge(
+                        percentage = cpuVal,
+                        label = "CPU",
+                        valueSubtext = "${cpuVal.toInt()}% load",
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    val memPercent = stats?.memPercentage ?: 0f
+                    val memUsedGb = formatBytesToGb(stats?.memUsed ?: 0L)
+                    val memTotalGb = formatBytesToGb(stats?.memTotal ?: 0L)
+                    CircularMetricGauge(
+                        percentage = memPercent,
+                        label = "RAM",
+                        valueSubtext = "$memUsedGb / $memTotalGb GB",
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    val diskPercent = stats?.diskPercentage ?: 0f
+                    val diskUsedGb = formatBytesToGb(stats?.diskUsed ?: 0L)
+                    val diskTotalGb = formatBytesToGb(stats?.diskTotal ?: 0L)
+                    CircularMetricGauge(
+                        percentage = diskPercent,
+                        label = "Disk",
+                        valueSubtext = "$diskUsedGb / $diskTotalGb GB",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                // Rolling Live Sparkline Trend Graphs
+                val currentCpuStr = "${(stats?.cpu ?: 0.0).toInt()}%"
+                SparklineTrendCard(
+                    title = "CPU Utilization Trend",
+                    currentValue = currentCpuStr,
+                    history = state.cpuHistory,
+                    lineColor = colors.statusActive
+                )
+
+                val currentMemStr = "${(stats?.memPercentage ?: 0f).toInt()}% (${formatBytesToGb(stats?.memUsed ?: 0L)} GB)"
+                SparklineTrendCard(
+                    title = "Memory Utilization Trend",
+                    currentValue = currentMemStr,
+                    history = state.memHistory,
+                    lineColor = colors.info.solid
+                )
+
+                // System Load Average Pills
+                if (stats != null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(colors.bgCard)
+                            .border(1.dp, colors.borderCard, RoundedCornerShape(14.dp))
+                            .padding(16.dp)
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                text = "SYSTEM LOAD AVERAGES",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.textMuted,
+                                letterSpacing = 0.5.sp
+                            )
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                LoadPill(label = "1 min", value = "${stats.load1Val}", modifier = Modifier.weight(1f))
+                                LoadPill(label = "5 min", value = "${stats.load5Val}", modifier = Modifier.weight(1f))
+                                LoadPill(label = "15 min", value = "${stats.load15Val}", modifier = Modifier.weight(1f))
+                            }
                         }
                     }
                 }
