@@ -9,8 +9,8 @@ This file is the single source of truth and comprehensive working handoff for th
 - **App Name**: Openship-App
 - **Package**: `com.kareemessam.openship`
 - **Platform**: Android (Kotlin Multiplatform Compose architecture designed for future iOS expansion)
-- **Status**: **Base Version v0.1.0 (Slices 1 to 4) 100% Completed & Verified on Device `SM-A556E`**
-- **Last Updated**: 2026-08-21 23:55 (Local Time)
+- **Status**: **Phase 2 Kickoff — MCP Actions planned and dependency wiring started. Base Version v0.1.0 (Slices 1 to 4) remains 100% Completed & Verified on Device `SM-A556E`.**
+- **Last Updated**: 2026-08-22 (Local Time)
 
 ---
 
@@ -25,11 +25,55 @@ This file is the single source of truth and comprehensive working handoff for th
 - [x] **Custom Centered Logo & Adaptive Launcher Icons**: True extracted artwork (Open ring + Rocket + Cargo ship), mathematically centered at `(512, 512)` with background removed, exported across all density mipmaps and in-app Compose UI.
 - [x] **Automated Port Forwarding & Direct Wi-Fi Connectivity**: Automatic Gradle `reverseAdbPorts` lifecycle task + direct LAN IP presets (`192.168.1.112:4000`) to eliminate manual port reversing forever.
 
-### Future Scope (v0.2.0+)
-- [ ] Write actions: One-tap Redeploy, Restart service, Cancel active deployment
-- [ ] Push notifications for deployment failures/successes
-- [ ] Environment variable manager (masked secrets viewing)
-- [ ] iOS target release (`iosApp` KMP targets)
+### Phase 2 Active Scope (v0.2.0 - MCP Actions)
+
+| Area | Decision |
+|---|---|
+| **First vertical slice** | Existing-project redeploy plus rollback, backed by MCP and followed by project/deployment refresh plus live logs when a deployment id is available. |
+| **MCP client surface** | Typed curated wrappers only. Generic MCP tool explorer is deferred to Phase 4. |
+| **Auth** | PAT-only for Phase 2. OAuth/PKCE remains deferred. |
+| **Tool discovery** | Discover tools at runtime and resolve current route-derived names; do not hardcode README-era slash-style guesses. |
+| **Write safety** | Confirmation required for every write. Rollback confirmation must show target deployment, commit, age, and current active deployment. |
+| **Unavailable MCP** | Older server, missing `/api/mcp`, read-only token, or missing write tools degrade to the completed Phase 1 read-only experience. |
+| **Catalog cache** | In-memory per active session; re-fetch on connect/foreground. Do not persist the catalog across token or permission changes. |
+| **Verification bar** | Unit tests for MCP result parsing, tool resolution, repository behavior, ViewModel states, and Gradle verification before closing Phase 2 tasks. |
+
+### Deferred Scope
+
+| Area | Reason |
+|---|---|
+| **Local folder deploy** | Requires Android file picking, tar/gzip packaging, upload progress, and an out-of-band binary upload that cannot go through MCP JSON-RPC. |
+| **Service start/stop/restart** | Deferred until deploy/rollback is proven; restart must explicitly handle `SERVICE_CONFIG_STALE` and force semantics. |
+| **Environment variable editing** | Deferred because masked secrets, merge semantics, deletion safety, and redeploy implications need a separate safety pass. |
+| **Domains & SSL writes** | Read-only domain/SSL viewing can come later; verify/renew/apply/primary actions need explicit safety design. |
+| **Push notifications** | Still future work; background SSE is not reliable enough for deployment completion notifications. |
+| **iOS target release** | Still future work; KMP architecture preserves the option without changing Phase 2 Android scope. |
+
+### Phase 2 Language
+
+**MCP Action**:
+A user-visible operation executed through Openship's MCP `tools/call` endpoint that may change deployment, service, project, environment, or domain state.
+_Avoid_: raw tool call, generic tool execution
+
+**Redeploy**:
+Start a new deployment for an existing, already-linked project from its current configured source.
+_Avoid_: project creation, folder upload
+
+**Rollback**:
+Return a project to a selected previous deployment artifact or commit.
+_Avoid_: undo, revert
+
+**Deployment History**:
+The list of prior deployments for a project, used to choose an explicit rollback target.
+_Avoid_: logs list, activity feed
+
+**Tool Catalog**:
+The MCP-visible list of tools available to the current token and server version.
+_Avoid_: global tool list, static tool list
+
+**Read-Only Fallback**:
+The completed Phase 1 behavior shown when MCP or the required write tools are unavailable.
+_Avoid_: degraded mode, disabled app
 
 ---
 
@@ -39,7 +83,7 @@ This file is the single source of truth and comprehensive working handoff for th
 |---|---|---|
 | **Language & Platform** | Kotlin 2.4.10 / JVM 21 | Kotlin Multiplatform (Common / Android) |
 | **UI Framework** | Compose Multiplatform 1.11.1 | Jetpack Compose + Material 3 + Custom Canvas Graphics |
-| **Networking & SSE** | Ktor Client 3.1.1 | ContentNegotiation, Kotlinx JSON 1.8.0, SSE plugin, OkHttp 4.12.0 engine |
+| **Networking, SSE & MCP** | Ktor Client 3.5.2 / MCP SDK Client 0.15.0 | ContentNegotiation, Kotlinx JSON 1.11.0, SSE plugin, OkHttp 4.12.0 engine, MCP client dependency wired in `shared/commonMain` |
 | **Dependency Injection** | Koin 4.0.2 | `koin-core`, `koin-compose`, `koin-compose-viewmodel`, `koin-android` |
 | **Storage & Security** | AndroidX Security Crypto 1.1.0-alpha06 | `EncryptedSharedPreferences` (AES-256-GCM / MasterKey) |
 | **Navigation** | Navigation Compose 2.8.0-alpha10 | Bottom Navigation (Projects, Monitoring) + Backstack routing for Logs |

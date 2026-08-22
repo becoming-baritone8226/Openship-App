@@ -2,7 +2,7 @@
 
 An unofficial Android client for [Openship](https://github.com/oblien/openship), the open-source self-hostable deployment platform with CI/CD. Built with Kotlin Multiplatform (KMP) and Compose Multiplatform, using the **Model Context Protocol (MCP)** as the primary API layer and **Server-Sent Events (SSE)** for real-time streaming.
 
-> **Status**: In Active Development (Phase 1: Foundations & Slices).
+> **Status**: Phase 2 kickoff. Phase 1 read-only client is complete; Phase 2 MCP action requirements are locked and tracked in Beads under `Openship-App-6lo`.
 >
 > **License**: Apache-2.0 (matches Openship, Kotlin MCP SDK, Ktor, Compose Multiplatform — no conflicts)
 >
@@ -16,11 +16,13 @@ An unofficial Android client for [Openship](https://github.com/oblien/openship),
 |---|---|---|
 | **Phase 0: Study & Alignment** | ✅ Completed | Completed study guide, `/grill-me` architectural interview & decisions locked. |
 | **Phase 1: Agent Skills Setup** | ✅ Completed | Installed 7 Superpowers skills + 5 KMP agent skills into `.agents/skills/`. |
-| **Phase 1: Dependency Setup** | ✅ Completed | Pinned Ktor 3.1.1, MCP SDK 0.15.0, Koin 4.0.2, kotlinx.serialization 1.8.0, Security Crypto, OkHttp, Network Security config. |
+| **Phase 1: Dependency Setup** | ✅ Completed | Pinned Ktor, MCP SDK catalog entry, Koin 4.0.2, kotlinx.serialization, Security Crypto, OkHttp, Network Security config. |
 | **Slice 1: Foundations & Connect** | ✅ Completed | Tolerant Models, Encrypted TokenStorage, HttpClientFactory, Connect Screen & Discovery probe. |
 | **Slice 2: Projects & Switcher** | ✅ Completed | ProjectsRepository, ProjectsViewModel, 1:1 Openship ProjectCards, Multi-Instance Switcher Dropdown, Pull-to-refresh. |
 | **Slice 3: Live Deploy Logs** | ✅ Completed | SSE Deploy Stream, Base64 decoding, ANSI color parsing, Stage Stepper, Monospace Terminal, Light/Dark themes. |
 | **Slice 4: Live Server Monitor** | ✅ Completed | Real 3s SSE Telemetry Stream, Animated Circular Gauges (CPU, RAM, Disk), Live Rolling Sparklines, Load Averages & Uptime. |
+| **Phase 2: MCP Actions Planning** | ✅ Completed | Requirements interview locked: typed MCP wrapper, existing-project redeploy/rollback first, guarded writes, read-only fallback, Beads execution tree. |
+| **Phase 2: MCP Foundation** | 🚧 In Progress | Align Ktor/serialization with MCP SDK, wire `mcp-sdk-client` into `shared/commonMain`, then add the wrapper and tests. |
 
 ---
 
@@ -104,6 +106,14 @@ These decisions were made during brainstorming and are locked:
 | 2 | **Platform**: Android only (iOS deferred) | Openship has desktop; Android fills the gap. KMP architecture allows iOS later without rewrite. |
 | 3 | **API layer**: MCP from the start | AI-native angle stands out. Official Kotlin MCP SDK exists and is production-ready. Cuts integration surface (186 tools via one endpoint vs hand-rolling REST routes). |
 | 4 | **Architecture**: MCP for discrete ops + SSE for real-time streams, shared Ktor HttpClient | Clean separation of concerns. One HttpClient for both layers = fewer sockets, consistent auth. |
+| 5 | **Phase 2 MVP**: existing-project redeploy + rollback first | Proves the full write path without taking on project creation, folder upload, env editing, or service-control edge cases immediately. |
+| 6 | **MCP client surface**: typed curated wrappers, not a generic tool console | Mobile write actions need predictable UX and safety. The generic 186-tool explorer stays Phase 4. |
+| 7 | **Auth for Phase 2**: PAT-only | OAuth/PKCE is deferred so MCP actions can ship against the already-supported credential path. |
+| 8 | **Tool resolution**: discover tools at runtime and prefer route-derived names | The Openship server generates tool names from HTTP method + route path, so the client must not depend on slash-style guesses. |
+| 9 | **Write safety**: confirm every write | Redeploy gets a normal confirmation. Rollback gets a stronger confirmation showing target deployment, commit, age, and current active deployment. |
+| 10 | **Unavailable MCP behavior**: degrade to read-only | Older servers, missing `/api/mcp`, and read-only/scoped tokens should hide or disable write actions with precise copy. |
+| 11 | **Tool catalog cache**: in-memory per active session | Persistent catalogs can lie after token or permission changes. Re-fetch on connect/foreground. |
+| 12 | **Completion bar**: tests before marking Phase 2 slices done | Cover MCP result parsing, tool resolution, repository behavior, ViewModel action states, and Gradle verification. |
 
 ---
 
@@ -120,14 +130,14 @@ All versions are pinned. The MCP SDK and Ktor versions are chosen to match each 
 | **Ktor Client** | 3.5.2 | HTTP + SSE + WebSocket (shared HttpClient) |
 | **kotlinx.serialization** | 1.11.0 | JSON serialization (matches MCP SDK) |
 | **Kotlin MCP SDK Client** | 0.15.0 | `io.modelcontextprotocol:kotlin-sdk-client` — MCP Streamable-HTTP client |
-| **Koin** | 4.x | Dependency injection (KMP-friendly, no codegen) |
+| **Koin** | 4.0.2 | Dependency injection (KMP-friendly, no codegen) |
 | **AndroidX Security** | 1.1.0-alpha06 | EncryptedSharedPreferences for PAT storage |
-| **AndroidX Lifecycle** | 2.8.x | Compose lifecycle integration |
-| **Navigation Compose** | 2.8.x | Screen routing |
+| **AndroidX Lifecycle** | 2.11.0-beta01 | Compose lifecycle integration |
+| **Navigation Compose** | 2.8.0-alpha10 | Screen routing |
 | **OkHttp** | 4.12.x | SSE engine for Ktor on Android |
-| **Android Gradle Plugin** | 8.7.x | Build tooling |
-| **compileSdk / targetSdk** | 35 | Android 15 |
-| **minSdk** | 26 | Android 8.0 (covers ~95% of devices) |
+| **Android Gradle Plugin** | 9.0.1 | Build tooling |
+| **compileSdk / targetSdk** | 36 | Android 16 |
+| **minSdk** | 24 | Android 7.0 |
 
 ### Why These Choices
 
@@ -140,73 +150,43 @@ All versions are pinned. The MCP SDK and Ktor versions are chosen to match each 
 ## 5. Project Structure
 
 ```
-openship-android/
-├── settings.gradle.kts
-├── build.gradle.kts                    # root: plugins, version catalog
+Openship-App/
+├── settings.gradle.kts                 # includes :androidApp and :shared
+├── build.gradle.kts                    # root plugins (apply false)
 ├── gradle/libs.versions.toml           # version catalog (single source of truth)
-├── gradle.properties                   # Kotlin/MPP flags, Android opts
-├── app/                                # Android application module
+├── gradle.properties                   # Kotlin/Gradle/Android flags
+├── androidApp/                         # Android application host
 │   ├── build.gradle.kts
+│   ├── proguard-rules.pro
 │   └── src/main/
-│       ├── AndroidManifest.xml         # networkSecurityConfig for cleartext LAN
-│       ├── java/com/openship/android/
-│       │   ├── OpenshipApp.kt          # Application class, Koin init
-│       │   ├── MainActivity.kt         # single-activity, Compose host
-│       │   ├── di/                      # Koin modules (client, repo, vm)
-│       │   │   ├── ClientModule.kt     # HttpClient, McpClient, SseClient
-│       │   │   ├── RepositoryModule.kt # OpenshipRepository binding
-│       │   │   └── ViewModelModule.kt  # ViewModels per screen
-│       │   ├── ui/                      # Compose screens + navigation
-│       │   │   ├── navigation/
-│       │   │   │   └── OpenshipNavHost.kt
-│       │   │   ├── theme/
-│       │   │   │   ├── Theme.kt
-│       │   │   │   ├── Color.kt
-│       │   │   │   └── Type.kt
-│       │   │   ├── screens/
-│       │   │   │   ├── connect/        # Add instance (URL + PAT)
-│       │   │   │   ├── projects/       # Project list
-│       │   │   │   ├── deploylogs/     # Live build log stream
-│       │   │   │   └── monitor/        # Live server metrics
-│       │   │   └── components/         # Shared composables
-│       │   └── work/                    # WorkManager (push-notif prep, later)
+│       ├── AndroidManifest.xml
+│       ├── kotlin/com/kareemessam/openship/
+│       │   ├── MainActivity.kt
+│       │   ├── OpenshipApplication.kt
+│       │   └── di/AppModule.kt
 │       └── res/
-│           ├── xml/
-│           │   └── network_security_config.xml
+│           ├── drawable/
+│           ├── mipmap-*/
 │           ├── values/
-│           │   ├── strings.xml
-│           │   └── themes.xml
-│           └── mipmap-*/               # App icons
-└── shared/                             # KMP shared module
+│           └── xml/network_security_config.xml
+└── shared/
     ├── build.gradle.kts
     └── src/
-        ├── commonMain/
-        │   └── kotlin/com/openship/shared/
-        │       ├── client/             # Networking layer
-        │       │   ├── HttpClientFactory.kt    # Shared Ktor HttpClient config
-        │       │   ├── McpClient.kt            # MCP wrapper (tool catalog, calls)
-        │       │   ├── SseClient.kt            # SSE stream client (logs, monitor)
-        │       │   └── AuthInterceptor.kt     # Bearer token injection
-        │       ├── model/              # Data classes (kotlinx.serialization)
-        │       │   ├── HealthEnv.kt           # /api/health/env response
-        │       │   ├── ProjectRow.kt          # Project list item
-        │       │   ├── ProjectsHome.kt        # /api/projects/home response
-        │       │   ├── DeploymentStatus.kt    # FSM states
-        │       │   ├── sse/                    # SSE event types
-        │       │   │   ├── DeployStreamEvent.kt  # log/progress/service-status/...
-        │       │   │   └── MonitorStats.kt       # cpu/mem/disk/load
-        │       │   └── InstanceConfig.kt      # Stored instance (url, label, patRef)
-        │       ├── repository/         # Data access layer
-        │       │   ├── OpenshipRepository.kt  # Interface
-        │       │   └── OpenshipRepositoryImpl.kt
-        │       └── util/               # Shared utilities
-        │           ├── Base64Decoder.kt       # Decode base64 log lines
-        │           └── SeqTracker.kt          # SSE sequence tracking for resume
-        └── androidMain/
-            └── kotlin/com/openship/shared/
-                └── platform/
-                    ├── TokenStorage.kt        # Android Keystore / EncryptedSharedPreferences
-                    └── PlatformEngine.kt      # OkHttp engine for Ktor
+        ├── commonMain/kotlin/com/kareemessam/openship/
+        │   ├── App.kt
+        │   └── shared/
+        │       ├── client/             # REST, SSE, and Phase 2 MCP client code
+        │       ├── di/
+        │       ├── model/
+        │       ├── storage/
+        │       ├── ui/
+        │       ├── util/
+        │       └── viewmodel/
+        ├── commonTest/kotlin/com/kareemessam/openship/shared/
+        └── androidMain/kotlin/com/kareemessam/openship/shared/
+            ├── client/PlatformEngine.android.kt
+            ├── platform/AndroidTokenStorage.kt
+            └── util/TimeUtil.android.kt
 ```
 
 ### Module Responsibilities
@@ -215,9 +195,9 @@ openship-android/
 |---|---|---|
 | `shared/commonMain` | All networking (MCP + SSE), models, repository, utils | No — pure Kotlin, runs on any KMP target |
 | `shared/androidMain` | Android-specific: token storage (Keystore), Ktor engine (OkHttp) | Yes |
-| `app` | Compose UI, Koin DI wiring, lifecycle, navigation, WorkManager | Yes |
+| `androidApp` | Android application entry point, manifest, resources, and Android Koin module | Yes |
 
-**Why `shared/` + `app/` split**: The `shared` module holds all networking, models, and repository logic in `commonMain` — pure Kotlin, no Android dependencies. When you add iOS later, you create `iosMain` in `shared/` for Keychain storage and a Darwin engine. The existing `commonMain` code runs unchanged.
+**Why `shared/` + `androidApp` split**: The `shared` module holds networking, models, repositories, ViewModels, and Compose UI in `commonMain` where possible. Android-specific storage and engine code stay in `androidMain` / `androidApp`. When iOS is added later, the shared business/UI code is reused and only platform storage/engine bindings need an iOS counterpart.
 
 ---
 
@@ -658,12 +638,12 @@ val transport = StreamableHttpClientTransport(
 // 4. Connect — performs initialize handshake + version negotiation + session capture
 mcpClient.connect(transport)
 
-// 5. List tools (paginated — cache locally)
-val tools = mcpClient.listTools().tools  // 186 tools, paginated via nextCursor
+// 5. List tools for the current token/server version; cache in memory for this session.
+val tools = mcpClient.listTools().tools
 
 // 6. Call a tool
 val result = mcpClient.callTool(
-    name = "projects/list",  // or whatever the Openship MCP tool name is
+    name = "get_projects",  // resolved from the discovered tool catalog
     arguments = mapOf("page" to 1, "perPage" to 20)
 )
 // result.content — raw content
@@ -675,23 +655,36 @@ val result = mcpClient.callTool(
 
 A thin wrapper (~100-200 LOC) that provides:
 - Token injection via `requestBuilder`
-- Tool catalog caching (call `listTools()` once, cache locally, refresh on `notifications/tools/list_changed`)
-- Typed wrappers for ~10 tool families (health, projects, deployments, etc.)
+- Runtime tool discovery from `tools/list`
+- In-memory tool catalog caching for the active instance/session
+- Route-derived tool resolution for known Openship actions
+- Typed wrappers for the curated Phase 2 surface: deployment history, redeploy, rollback, and later service/env/domain workflows
 - Reconnect on foreground (lifecycle handling)
-- 404-session-expiry handling
+- MCP-unavailable and missing-permission fallback to read-only UI
+- `isError` / JSON-RPC error mapping into domain results
 
-### MCP Tools to Use for Base Features
+### Current MCP Tool Naming
 
-> **Note**: Exact MCP tool names need to be confirmed by calling `listTools()` against a running Openship instance. The routes opt in via `mcp: { description }` in the route definition. The tool name is typically derived from the route path.
+The local Openship server generates stable MCP tool names from HTTP method + route path in `apps/api/src/modules/mcp/mcp-tools.ts`: remove the `api` segment, convert path params to `by_<param>`, join with underscores, and prefix the lowercase HTTP method.
 
-| Base Feature | MCP Tool (expected) | Fallback REST |
+The app should still discover tools at runtime because permissions, server version, and future route changes affect what is visible.
+
+| Workflow | Current route | Current generated MCP tool |
 |---|---|---|
-| Health check | `health` or `health/env` | `GET /api/health/env` |
-| List projects | `projects/list` or `projects/home` | `GET /api/projects/home` |
-| (Future) Deploy | `projects/deploy` | `POST /api/projects/:id/deploy` |
-| (Future) Rollback | `deployments/rollback` | `POST /api/deployments/:id/rollback` |
+| List projects | `GET /api/projects` | `get_projects` |
+| Deployment history | `GET /api/deployments?projectId=...` | `get_deployments` |
+| Deployment detail | `GET /api/deployments/:id` | `get_deployments_by_id` |
+| Git redeploy existing project | `POST /api/deployments` | `post_deployments` |
+| Re-run latest deployment | `POST /api/deployments/:id/redeploy` | `post_deployments_by_id_redeploy` |
+| Roll back to deployment | `POST /api/deployments/:id/rollback` | `post_deployments_by_id_rollback` |
+| Cancel active deployment | `POST /api/deployments/:id/cancel` | `post_deployments_by_id_cancel` |
+| Service restart | `POST /api/projects/:id/services/:serviceId/restart` | `post_projects_by_id_services_by_serviceId_restart` |
+| Project env list/edit | `GET/PATCH /api/projects/:id/env` | `get_projects_by_id_env` / `patch_projects_by_id_env` |
+| Domains list | `GET /api/domains` | `get_domains` |
 
 **Important**: Credential/token routes **cannot** opt into MCP — they're excluded for security. Use direct REST for those (not needed in base version).
+
+Current local server behavior: `/api/mcp` is stateless JSON-RPC over Streamable HTTP, does not push server-to-client notifications, and advertises `tools.listChanged = false`. The Android app should re-fetch the catalog on connect/foreground and tolerate future pagination or list-change support if the SDK/server adds it.
 
 ### Proven in Android (Google precedent)
 
@@ -705,7 +698,7 @@ A thin wrapper (~100-200 LOC) that provides:
 
 3. **Lifecycle** — Don't hold MCP Client across backgrounding. Reconnect on foreground. Session 404-handling is your responsibility.
 
-4. **186 tools ≠ 186 round-trips** — `tools/list` is paginated. Cache the tool catalog + JSON schemas locally. Refresh on `notifications/tools/list_changed` notification.
+4. **Tool catalog is permission-shaped** — `tools/list` only advertises what the current token can use. Cache the catalog in memory for the active session and re-fetch on connect/foreground.
 
 5. **One HttpClient** — The SDK shares your Ktor client. Install SSE once. Use the same instance for MCP transport AND direct SSE streams. Fewer sockets, consistent auth.
 
@@ -915,19 +908,9 @@ opsh login --token <existing-token> --api-url http://localhost:4000
 opsh tokens create --name "android-dev" --permissions "project:list,deployment:read,server:read"
 ```
 
-### Creating the Project
+### Repository Modules
 
-```bash
-# From the parent directory of openship/
-mkdir openship-android
-cd openship-android
-
-# Initialize Gradle project
-gradle init --type kotlin --project-name openship-android
-
-# Or use the KMP wizard: https://kmp.jetbrains.com/
-# Select: Android only, Compose Multiplatform, Ktor, kotlinx.serialization
-```
+This repository is already scaffolded. Use `:androidApp` for the Android app host and `:shared` for KMP networking, models, ViewModels, and Compose UI.
 
 ### Version Catalog (`gradle/libs.versions.toml`)
 
@@ -938,12 +921,12 @@ compose-multiplatform = "1.11.1"
 ktor = "3.5.2"
 kotlinx-serialization = "1.11.0"
 mcp-sdk = "0.15.0"
-koin = "4.0.0"
+koin = "4.0.2"
 androidx-security = "1.1.0-alpha06"
-androidx-lifecycle = "2.8.7"
-navigation-compose = "2.8.5"
+androidx-lifecycle = "2.11.0-beta01"
+navigation-compose = "2.8.0-alpha10"
 okhttp = "4.12.0"
-agp = "8.7.3"
+agp = "9.0.1"
 
 [libraries]
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
@@ -954,35 +937,35 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 mcp-sdk-client = { module = "io.modelcontextprotocol:kotlin-sdk-client", version.ref = "mcp-sdk" }
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
-koin-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koin" }
+koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" }
 androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "androidx-security" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "androidx-lifecycle" }
 navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation-compose" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 
 [plugins]
-kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-android-application = { id = "com.android.application", version.ref = "agp" }
-android-library = { id = "com.android.library", version.ref = "agp" }
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
+composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+androidApplication = { id = "com.android.application", version.ref = "agp" }
+androidMultiplatformLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 ```
 
 ### Build & Run
 
 ```bash
 # Build debug APK
-./gradlew :app:assembleDebug
+./gradlew :androidApp:assembleDebug
 
 # Install on connected device/emulator
-./gradlew :app:installDebug
+./gradlew :androidApp:installDebug
 
 # Run unit tests (shared module)
-./gradlew :shared:testDebugUnitTest
+./gradlew :shared:allTests
 
 # Run instrumented tests
-./gradlew :app:connectedAndroidTest
+./gradlew :androidApp:connectedAndroidTest
 ```
 
 ### Testing Against a Local Openship Instance
@@ -1004,10 +987,10 @@ android-library = { id = "com.android.library", version.ref = "agp" }
 
 | Feature | Status | API |
 |---|---|---|
-| Connect (add instance by URL + PAT) | Planned | `GET /api/health/env` (discovery) |
-| List projects | Planned | MCP `projects/list` or `GET /api/projects/home` |
-| Live build/deploy logs | Planned | SSE `GET /api/deployments/:id/stream` |
-| Live monitoring | Planned | SSE `GET /api/system/monitor/stream` |
+| Connect (add instance by URL + PAT) | Completed | `GET /api/health/env` (discovery) |
+| List projects | Completed | `GET /api/projects`, `GET /api/deployments` |
+| Live build/deploy logs | Completed | SSE `GET /api/deployments/:id/stream` |
+| Live monitoring | Completed | SSE `GET /api/system/monitor/stream` |
 
 ### Phase 1.5 — Polish
 
@@ -1018,14 +1001,21 @@ android-library = { id = "com.android.library", version.ref = "agp" }
 | Dark/light theme | Material 3 dynamic color |
 | Widget | Home screen widget for monitoring stats |
 
-### Phase 2 — Actions
+### Phase 2 — MCP Actions
 
-| Feature | API |
-|---|---|
-| Deploy / rollback / redeploy | MCP `projects/deploy`, `deployments/rollback` |
-| Service control (start/stop/restart) | MCP `services/control` |
-| Environment variables (view/edit) | MCP `projects/env` |
-| Domains & SSL (view) | MCP `domains/list` |
+Tracked in Beads under `Openship-App-6lo`.
+
+| Slice | Status | Scope |
+|---|---|---|
+| MCP dependency alignment | In progress | Ktor `3.5.2`, kotlinx.serialization `1.11.0`, MCP SDK client `0.15.0` in `shared/commonMain`. |
+| MCP client wrapper | Next | Connect, discover tools, call tools, map errors, cache catalog in memory, reconnect on foreground. |
+| Deployment history | Next | List deployments for a project so rollback has a real target. |
+| Redeploy existing project | Next | Confirm, call MCP, refresh project/deployment state, route to live logs. |
+| Rollback selected deployment | Next | Strong confirmation with target/current deployment details, call MCP, refresh, route to logs when possible. |
+| Service controls | Deferred | Start/stop/restart after deploy/rollback is proven; restart must handle `SERVICE_CONFIG_STALE`. |
+| Environment variables | Deferred | Read-only first, merge-based editing later; never blind-replace masked secrets. |
+| Domains & SSL | Deferred | Read-only domains/SSL view first; writes such as renew/apply/primary need separate safety design. |
+| Local folder deploy | Out of scope | Requires Android file picking, tar/gzip packaging, upload progress, and out-of-band binary upload. |
 
 ### Phase 3 — Power User
 
@@ -1058,7 +1048,9 @@ android-library = { id = "com.android.library", version.ref = "agp" }
 | **MCP server contract unknowns** | Whether `/api/mcp` is sessionful or stateless; 404-session-expiry behavior | Test early. SDK handles both modes. Implement reconnect logic. |
 | **Cleartext on LAN** | Android blocks cleartext by default | `networkSecurityConfig` with cleartext permit. Consider domain-specific permits for production. |
 | **Backgrounding kills SSE** | User misses deploy completion while app is backgrounded | Push notifications (Phase 1.5). Save `lastSeq` for deploy log resume on foreground. |
-| **186 tools pagination** | `tools/list` is paginated — not all tools in one response | Cache tool catalog locally. Handle `nextCursor` pagination. Refresh on `notifications/tools/list_changed`. |
+| **Tool catalog shape changes** | Current local server returns the visible tool catalog in one response with `tools.listChanged = false`; future server/SDK versions may add pagination or list-change notifications | Cache in memory per session, re-fetch on connect/foreground, and tolerate `nextCursor` / list-change support if it appears. |
+| **Tool name drift** | Server route changes can rename generated MCP tools | Discover at runtime, resolve known route-derived names, and hide actions when required tools are absent. |
+| **Mobile write trust** | A mistaken deploy/rollback is user-visible and potentially disruptive | Confirm every write, use stronger rollback confirmation, and always refresh state after a successful action. |
 
 ---
 
@@ -1119,22 +1111,15 @@ android-library = { id = "com.android.library", version.ref = "agp" }
 
 ---
 
-## Quick Start Checklist
+## Current Execution Order
 
-- [ ] Create project structure (see Section 5)
-- [ ] Set up `gradle/libs.versions.toml` (see Section 12)
-- [ ] Configure `shared/build.gradle.kts` with KMP targets (Android only)
-- [ ] Configure `app/build.gradle.kts` with Compose, Android manifest, network security config
-- [ ] Implement `HttpClientFactory` in `shared/commonMain` (Ktor + SSE plugin)
-- [ ] Implement `TokenStorage` in `shared/androidMain` (EncryptedSharedPreferences)
-- [ ] Implement `McpClient` wrapper in `shared/commonMain` (connect, listTools, callTool)
-- [ ] Implement `SseClient` in `shared/commonMain` (deploy logs + monitor streams)
-- [ ] Implement `OpenshipRepository` interface + impl in `shared/commonMain`
-- [ ] Create data classes in `shared/commonMain/model/` (HealthEnv, ProjectRow, SSE events)
-- [ ] Set up Koin DI in `app/di/`
-- [ | Build Connect screen (URL + PAT input, health/env discovery)
-- [ ] Build Projects screen (MCP listTools + callTool for projects)
-- [ ] Build Deploy Logs screen (SSE stream with base64 decode + seq tracking)
-- [ ] Build Monitor screen (SSE stream with 3s stats updates)
-- [ ] Test against local Openship instance (`bun dev` → `http://10.0.2.2:4000`)
-- [ ] Open GitHub Discussion on oblien/openship with a working demo
+Beads is the task-tracking source of truth. Use `bd show Openship-App-6lo` for the Phase 2 epic and `bd ready` to pick up the next unblocked task.
+
+1. `Openship-App-6lo.3` — Align MCP dependencies and shared SDK wiring.
+2. `Openship-App-6lo.7` — Implement MCP client wrapper and tool discovery.
+3. `Openship-App-6lo.1` — Add deployment history for rollback selection.
+4. `Openship-App-6lo.6` — Implement existing-project redeploy action.
+5. `Openship-App-6lo.2` — Implement rollback action with stronger confirmation.
+6. `Openship-App-6lo.4` — Defer service controls until deploy/rollback is proven.
+7. `Openship-App-6lo.8` — Defer environment variable management.
+8. `Openship-App-6lo.5` — Defer domains read-only surface.
