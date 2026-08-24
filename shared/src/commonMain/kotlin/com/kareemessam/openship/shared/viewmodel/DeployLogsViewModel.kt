@@ -7,7 +7,7 @@ import com.kareemessam.openship.shared.client.DeployLogsRepository
 import com.kareemessam.openship.shared.model.sse.DeployStreamEvent
 import com.kareemessam.openship.shared.storage.TokenStorage
 import com.kareemessam.openship.shared.util.AnsiParser
-import com.kareemessam.openship.shared.util.Base64Decoder
+import com.kareemessam.openship.shared.util.decodeBase64ToString
 import com.kareemessam.openship.shared.util.SeqTracker
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -106,7 +106,7 @@ class DeployLogsViewModel(
                 .collect { event ->
                     when (event) {
                         is DeployStreamEvent.Log -> {
-                            val decoded = Base64Decoder.decodeToString(event.data)
+                            val decoded = decodeBase64ToString(event.data)
                             val lines = decoded.split("\n")
                             val newItems = lines.filter { it.isNotEmpty() }.map { line ->
                                 logCounter++

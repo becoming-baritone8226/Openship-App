@@ -29,7 +29,10 @@ import com.kareemessam.openship.shared.ui.theme.OpenshipAppTheme
 fun ProjectCard(
     project: ProjectSummary,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    mcpRedeployAvailable: Boolean = false,
+    onRedeployClick: () -> Unit = {},
+    onHistoryClick: () -> Unit = {}
 ) {
     val colors = OpenshipAppTheme.colors
     val statusKind = when (project.status) {
@@ -61,11 +64,40 @@ fun ProjectCard(
             ) {
                 MacWindowDots()
 
-                StatusBadge(
-                    text = project.statusText,
-                    kind = statusKind,
-                    pulseDot = project.status == ProjectStatus.BUILDING || project.status == ProjectStatus.READY
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    IconButton(
+                        onClick = onHistoryClick,
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.History,
+                            contentDescription = "Deployment history",
+                            tint = colors.textSecondary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    if (mcpRedeployAvailable) {
+                        IconButton(
+                            onClick = onRedeployClick,
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Redeploy",
+                                tint = colors.textSecondary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                    StatusBadge(
+                        text = project.statusText,
+                        kind = statusKind,
+                        pulseDot = project.status == ProjectStatus.BUILDING || project.status == ProjectStatus.READY
+                    )
+                }
             }
 
             // Project Title & Framework Info

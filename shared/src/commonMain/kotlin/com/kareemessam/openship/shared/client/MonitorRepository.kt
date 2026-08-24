@@ -17,7 +17,7 @@ import io.ktor.client.plugins.timeout
 class MonitorRepository(
     private val httpClient: HttpClient,
     private val discoveryService: DiscoveryService,
-    private val json: Json = Json { ignoreUnknownKeys = true; isLenient = true }
+    private val json: Json = HttpClientFactory.tolerantJson
 ) {
 
     suspend fun getServers(instance: InstanceConfig): Result<List<ServerItemDto>> = runCatching {

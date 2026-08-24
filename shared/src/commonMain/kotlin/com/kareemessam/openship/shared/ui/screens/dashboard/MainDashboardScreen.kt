@@ -29,6 +29,8 @@ enum class DashboardTab {
 fun MainDashboardScreen(
     onAddInstanceClicked: () -> Unit,
     onProjectClicked: (ProjectSummary) -> Unit,
+    onOpenDeploymentLogs: (ProjectSummary, String) -> Unit,
+    onHistoryClicked: (ProjectSummary) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProjectsViewModel = koinViewModel()
 ) {
@@ -100,7 +102,13 @@ fun MainDashboardScreen(
                         onSearchChanged = viewModel::onSearchQueryChanged,
                         onInstanceSelected = viewModel::switchInstance,
                         onAddInstanceClicked = onAddInstanceClicked,
-                        onProjectClicked = onProjectClicked
+                        onProjectClicked = onProjectClicked,
+                        onRedeployClick = viewModel::onRedeployClick,
+                        onRedeployConfirm = viewModel::confirmRedeploy,
+                        onRedeployCancel = viewModel::cancelRedeploy,
+                        onRedeployResultConsumed = viewModel::consumeRedeployResult,
+                        onOpenLogs = onOpenDeploymentLogs,
+                        onHistoryClick = onHistoryClicked
                     )
                 }
                 DashboardTab.MONITOR -> {

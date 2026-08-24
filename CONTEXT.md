@@ -9,8 +9,8 @@ This file is the single source of truth and comprehensive working handoff for th
 - **App Name**: Openship-App
 - **Package**: `com.kareemessam.openship`
 - **Platform**: Android (Kotlin Multiplatform Compose architecture designed for future iOS expansion)
-- **Status**: **Phase 2 Kickoff — MCP Actions planned and dependency wiring started. Base Version v0.1.0 (Slices 1 to 4) remains 100% Completed & Verified on Device `SM-A556E`.**
-- **Last Updated**: 2026-08-22 (Local Time)
+- **Status**: **Phase 2 In Progress — MCP Foundation + redeploy & rollback write actions complete (dep alignment, client wrapper, tool discovery, deployment history, redeploy, rollback). Next: deferred slices (service controls, env vars). Base Version v0.1.0 (Slices 1 to 4) remains 100% Completed & Verified on Device `SM-A556E`.**
+- **Last Updated**: 2026-08-24 (Local Time)
 
 ---
 
@@ -37,6 +37,19 @@ This file is the single source of truth and comprehensive working handoff for th
 | **Unavailable MCP** | Older server, missing `/api/mcp`, read-only token, or missing write tools degrade to the completed Phase 1 read-only experience. |
 | **Catalog cache** | In-memory per active session; re-fetch on connect/foreground. Do not persist the catalog across token or permission changes. |
 | **Verification bar** | Unit tests for MCP result parsing, tool resolution, repository behavior, ViewModel states, and Gradle verification before closing Phase 2 tasks. |
+
+### Phase 2 Progress
+
+| Slice | Beads ID | Status |
+|---|---|---|
+| MCP dependency alignment & shared SDK wiring | `Openship-App-6lo.3` | ✅ Closed — Ktor 3.5.2, kotlinx.serialization 1.11.0, MCP SDK 0.15.0 wired in `shared/commonMain`; build + tests verified. |
+| MCP client wrapper & tool discovery | `Openship-App-6lo.7` | ✅ Closed — `McpClient.kt` (connect/list/call/resolve/reconnect), `McpTools` route-derived name constants, `toDomainResult`/`textContent` helpers, DI wired, 9 unit tests green. |
+| Deployment history for rollback selection | `Openship-App-6lo.1` | ✅ Closed — `DeploymentsRepository` (REST history fetch, sorted newest-first), `DeploymentHistoryViewModel` (load/select/eligibility), `DeploymentHistoryScreen` (status badge, commit, age, rollback-eligible indicator), 11 unit tests green. |
+| Existing-project redeploy action | `Openship-App-6lo.6` | ✅ Closed — `DeployActionsRepository` (MCP redeploy wrapper, availability gating, deployment-id extraction), `ProjectsViewModel` redeploy state (confirm/loading/error/result), `ProjectCard` redeploy button, `ProjectsScreen` confirmation dialog + log navigation, `AppNavHost` + `MainDashboardScreen` wiring, 15 unit tests green. |
+| Rollback selected deployment | `Openship-App-6lo.2` | ✅ Closed — `DeployActionsRepository.rollback` + `isRollbackAvailable`, `DeploymentHistoryViewModel` rollback state machine (target/loading/error/result), `RollbackConfirmDialog` (target commit+age+active-deployment warning), `ProjectCard` history button, `Screen.DeploymentHistory` route + `AppNavHost` wiring (projects → history → logs on success), 10 new unit tests green. |
+| Service controls | `Openship-App-6lo.4` | ❄ Deferred — until deploy/rollback proven; restart must handle `SERVICE_CONFIG_STALE`. |
+| Environment variable management | `Openship-App-6lo.8` | ❄ Deferred — masked secrets + merge semantics need a safety pass. |
+| Domains read-only surface | `Openship-App-6lo.5` | ❄ Deferred (P3). |
 
 ### Deferred Scope
 
@@ -139,7 +152,10 @@ Openship-App/
         │   ├── DiscoveryService.kt           # Probes /api/health/env and normalizes URLs
         │   ├── ProjectsRepository.kt         # Queries /api/projects & /api/deployments
         │   ├── DeployLogsRepository.kt       # Live SSE streaming from /api/deployments/:id/stream
-        │   └── MonitorRepository.kt          # Queries /api/system/servers & streams /api/system/monitor/stream
+        │   ├── MonitorRepository.kt          # Queries /api/system/servers & streams /api/system/monitor/stream
+        │   ├── McpClient.kt                  # Phase 2 MCP wrapper: connect/list/call/resolve + McpTools constants
+        │   ├── DeploymentsRepository.kt      # Phase 2 REST deployment history fetch (sorted newest-first)
+        │   └── DeployActionsRepository.kt    # Phase 2 MCP write actions: redeploy + rollback (cancel deferred)
         ├── shared/model/
         │   ├── EnvDto.kt                     # Tolerant Openship environment model
         │   ├── InstanceConfig.kt             # Saved server instances
@@ -148,9 +164,10 @@ Openship-App/
         │   └── sse/DeployStreamEvent.kt      # SSE polymorphic event serialization
         ├── shared/viewmodel/
         │   ├── ConnectViewModel.kt           # Instance discovery & PAT persistence
-        │   ├── ProjectsViewModel.kt          # Filtering, instance switching, pull-to-refresh
+        │   ├── ProjectsViewModel.kt          # Filtering, instance switching, pull-to-refresh, MCP redeploy action
         │   ├── DeployLogsViewModel.kt        # Terminal streaming, ANSI parsing, search, build stages
-        │   └── MonitorViewModel.kt           # Live 3s telemetry, 30-sample rolling sparkline history
+        │   ├── MonitorViewModel.kt           # Live 3s telemetry, 30-sample rolling sparkline history
+        │   └── DeploymentHistoryViewModel.kt # Phase 2 deployment history list + rollback eligibility + rollback action state
         ├── shared/util/
         │   ├── AnsiParser.kt                 # ANSI terminal color escape parser -> AnnotatedString
         │   ├── Base64Decoder.kt              # Standard Base64 stdout/stderr log line decoder
@@ -161,16 +178,17 @@ Openship-App/
             │   └── OpenshipTheme.kt          # Material3 wrapper & LocalThemeMode switcher
             ├── components/
             │   ├── OpenshipBrandHeader.kt    # Brand TopBar with OpenShip logo image, Mac dots, theme toggle
-            │   ├── ProjectCard.kt            # 1:1 Openship card with framework squircle, git branch, SSL badge
+            │   ├── ProjectCard.kt            # 1:1 Openship card with framework squircle, git branch, SSL badge, redeploy + history buttons
             │   ├── StatusBadge.kt            # Pulsing status pill badges (Ready, Building, Failed)
             │   ├── InstanceSwitcherDropdown.kt# Server dropdown switcher & Add Server modal
             │   └── MetricVisuals.kt          # CircularMetricGauge & Canvas SparklineTrendCard
             └── screens/
                 ├── connect/ConnectScreen.kt  # Onboarding & Connection Form with Wi-Fi/USB presets
                 ├── dashboard/MainDashboardScreen.kt # Bottom Navigation Bar (Projects & Monitoring)
-                ├── projects/ProjectsScreen.kt# Search bar, segmented filter control, project list
+                ├── projects/ProjectsScreen.kt# Search bar, segmented filter control, project list, MCP redeploy confirmation dialog, history entry point
                 ├── logs/DeployLogsScreen.kt  # Monospace developer terminal with 5-stage stepper
-                └── monitor/ServerMonitorScreen.kt # Live gauges, rolling sparklines, load averages
+                ├── monitor/ServerMonitorScreen.kt # Live gauges, rolling sparklines, load averages
+                └── deployments/DeploymentHistoryScreen.kt # Phase 2 deployment history list + rollback target selection + strong confirmation dialog
 ```
 
 ---
@@ -194,7 +212,8 @@ Openship-App/
 
 ## 🧪 Verification & Testing State
 
-- **Unit & Compilation Tests**: `./gradlew test` executes 40 tasks cleanly with 0 compilation errors.
+- **Unit & Compilation Tests**: `./gradlew :shared:testAndroidHostTest` runs 58 tests across 10 suites with 0 failures, 0 errors, 0 skipped. Suites: `McpClientTest` (9), `DeployActionsRepositoryTest` (13), `DeploymentsRepositoryTest` (3), `DeploymentHistoryViewModelTest` (14), `ProjectsViewModelRedeployTest` (6), `DiscoveryServiceTest` (1), `HealthEnvTest` (2), `AnsiParserTest` (3), `Base64DecoderTest` (4), `SeqTrackerTest` (3).
+- **Compilation**: `./gradlew :shared:compileAndroidMain` clean with MCP SDK 0.15.0 + redeploy/rollback/history wiring + DeploymentHistory nav route.
 - **Physical Device Tests**: Verified on physical device **Samsung Galaxy A55 5G (`SM-A556E`)** running Android 14/15.
   - Multi-instance connection probe: **PASSED**
   - Project listing & framework squircle rendering: **PASSED**

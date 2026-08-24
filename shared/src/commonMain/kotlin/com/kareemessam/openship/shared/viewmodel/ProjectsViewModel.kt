@@ -2,6 +2,7 @@ package com.kareemessam.openship.shared.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kareemessam.openship.shared.client.DeployActionsRepository
 import com.kareemessam.openship.shared.client.ProjectsRepository
 import com.kareemessam.openship.shared.model.InstanceConfig
 import com.kareemessam.openship.shared.model.ProjectSummary
@@ -19,7 +20,12 @@ data class ProjectsUiState(
     val searchQuery: String = "",
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val redeployAvailable: Boolean = false,
+    val redeployTarget: ProjectSummary? = null,
+    val redeployLoading: Boolean = false,
+    val redeployError: String? = null,
+    val redeployResultDeploymentId: String? = null
 ) {
     val filteredProjects: List<ProjectSummary>
         get() = if (searchQuery.isBlank()) {
@@ -35,7 +41,8 @@ data class ProjectsUiState(
 
 class ProjectsViewModel(
     private val projectsRepository: ProjectsRepository,
-    private val tokenStorage: TokenStorage
+    private val tokenStorage: TokenStorage,
+    private val deployActionsRepository: DeployActionsRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ProjectsUiState())
@@ -55,12 +62,17 @@ class ProjectsViewModel(
                 allInstances = instances
             )
         }
+        refreshRedeployAvailability()
 
         if (active != null) {
             fetchProjects(active, isRefresh = false)
         } else {
             _state.update { it.copy(isLoading = false, projects = emptyList()) }
         }
+    }
+
+    fun refreshRedeployAvailability() {
+        _state.update { it.copy(redeployAvailable = deployActionsRepository.isRedeployAvailable()) }
     }
 
     fun refresh() {
@@ -80,6 +92,48 @@ class ProjectsViewModel(
     fun deleteInstance(instanceId: String) {
         tokenStorage.deleteInstance(instanceId)
         loadInstancesAndProjects()
+    }
+
+    fun onRedeployClick(project: ProjectSummary) {
+        _state.update { it.copy(redeployTarget = project, redeployError = null) }
+    }
+
+    fun confirmRedeploy() {
+        val instance = _state.value.activeInstance ?: return
+        val project = _state.value.redeployTarget ?: return
+        viewModelScope.launch {
+            _state.update { it.copy(redeployLoading = true, redeployError = null) }
+            deployActionsRepository.redeploy(instance, project)
+                .onSuccess { deploymentId ->
+                    _state.update {
+                        it.copy(
+                            redeployLoading = false,
+                            redeployError = null,
+                            redeployResultDeploymentId = deploymentId,
+                            // Keep the target so the UI can navigate with the project;
+                            // close the dialog when no id could be extracted (refresh-only success).
+                            redeployTarget = if (deploymentId != null) it.redeployTarget else null
+                        )
+                    }
+                    fetchProjects(instance, isRefresh = true)
+                }
+                .onFailure { err ->
+                    _state.update {
+                        it.copy(
+                            redeployLoading = false,
+                            redeployError = err.message ?: "Redeploy failed."
+                        )
+                    }
+                }
+        }
+    }
+
+    fun cancelRedeploy() {
+        _state.update { it.copy(redeployTarget = null, redeployError = null) }
+    }
+
+    fun consumeRedeployResult() {
+        _state.update { it.copy(redeployResultDeploymentId = null, redeployTarget = null) }
     }
 
     private fun fetchProjects(instance: InstanceConfig, isRefresh: Boolean) {

@@ -10,11 +10,15 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.kareemessam.openship.shared.storage.TokenStorage
 import com.kareemessam.openship.shared.ui.screens.connect.ConnectScreen
 import com.kareemessam.openship.shared.ui.screens.dashboard.MainDashboardScreen
+import com.kareemessam.openship.shared.ui.screens.deployments.DeploymentHistoryScreen
 import com.kareemessam.openship.shared.ui.screens.logs.DeployLogsScreen
 import com.kareemessam.openship.shared.viewmodel.ConnectViewModel
 import com.kareemessam.openship.shared.viewmodel.DeployLogsViewModel
+import com.kareemessam.openship.shared.viewmodel.DeploymentHistoryViewModel
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -55,6 +59,14 @@ fun AppNavHost(
                 onProjectClicked = { project ->
                     val depId = project.activeDeploymentId ?: "live"
                     navController.navigate(Screen.Logs.createRoute(project.id, depId, project.name))
+                },
+                onOpenDeploymentLogs = { project, deploymentId ->
+                    navController.navigate(Screen.Logs.createRoute(project.id, deploymentId, project.name))
+                },
+                onHistoryClicked = { project ->
+                    navController.navigate(
+                        Screen.DeploymentHistory.createRoute(project.id, project.name, project.activeDeploymentId)
+                    )
                 }
             )
         }
@@ -83,6 +95,46 @@ fun AppNavHost(
                 onSearchChanged = viewModel::onSearchQueryChanged,
                 onAutoScrollChanged = viewModel::setAutoScroll,
                 onRetry = viewModel::retry
+            )
+        }
+
+        composable(
+            route = Screen.DeploymentHistory.route,
+            arguments = listOf(
+                navArgument("projectId") { type = NavType.StringType },
+                navArgument("projectName") { type = NavType.StringType },
+                navArgument("activeDeploymentId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val projectId = backStackEntry.arguments?.getString("projectId") ?: ""
+            val projectName = backStackEntry.arguments?.getString("projectName")?.replace("_", "/") ?: ""
+            val activeDeploymentId = backStackEntry.arguments
+                ?.getString("activeDeploymentId")
+                ?.takeIf { it != "none" }
+
+            val tokenStorage: TokenStorage = koinInject()
+            val viewModel: DeploymentHistoryViewModel = koinViewModel()
+            val state by viewModel.state.collectAsState()
+
+            LaunchedEffect(projectId) {
+                val instance = tokenStorage.getActiveInstance() ?: tokenStorage.loadInstances().firstOrNull()
+                if (instance != null) {
+                    viewModel.loadHistory(instance, projectId, activeDeploymentId)
+                }
+            }
+
+            DeploymentHistoryScreen(
+                state = state,
+                onBack = { navController.popBackStack() },
+                onSelect = viewModel::selectDeployment,
+                onRollback = viewModel::onRollbackClick,
+                onRollbackConfirm = viewModel::confirmRollback,
+                onRollbackCancel = viewModel::cancelRollback,
+                onRollbackResultConsumed = viewModel::consumeRollbackResult,
+                onOpenLogs = { deploymentId ->
+                    navController.navigate(Screen.Logs.createRoute(projectId, deploymentId, projectName))
+                },
+                onDismiss = viewModel::clearSelection
             )
         }
     }

@@ -19,4 +19,14 @@ sealed interface Screen {
             return "logs/$projectId/$deploymentId/$encodedName"
         }
     }
+
+    data object DeploymentHistory : Screen {
+        override val route = "history/{projectId}/{projectName}/{activeDeploymentId}"
+
+        fun createRoute(projectId: String, projectName: String, activeDeploymentId: String?): String {
+            val encodedName = projectName.replace("/", "_")
+            val depId = activeDeploymentId ?: "none"
+            return "history/$projectId/$encodedName/$depId"
+        }
+    }
 }

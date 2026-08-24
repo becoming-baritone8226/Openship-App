@@ -76,7 +76,7 @@ fun OpenshipTheme(
         ThemeMode.SYSTEM -> isSystemDark
     }
 
-    val customColors = if (isDark) darkOpenshipColors() else lightOpenshipColors()
+    val customColors = if (isDark) OpenshipCustomColors() else lightOpenshipColors()
     val colorScheme = if (isDark) OpenshipDarkColorScheme else OpenshipLightColorScheme
 
     CompositionLocalProvider(

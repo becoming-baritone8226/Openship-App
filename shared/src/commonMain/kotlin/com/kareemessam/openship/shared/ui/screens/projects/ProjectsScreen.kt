@@ -43,11 +43,27 @@ fun ProjectsScreen(
     onInstanceSelected: (String) -> Unit,
     onAddInstanceClicked: () -> Unit,
     onProjectClicked: (ProjectSummary) -> Unit,
+    onRedeployClick: (ProjectSummary) -> Unit,
+    onRedeployConfirm: () -> Unit,
+    onRedeployCancel: () -> Unit,
+    onRedeployResultConsumed: () -> Unit,
+    onOpenLogs: (ProjectSummary, String) -> Unit,
+    onHistoryClick: (ProjectSummary) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = OpenshipAppTheme.colors
     var selectedFilter by remember { mutableStateOf(ProjectFilterTab.ALL) }
     var isInstanceModalOpen by remember { mutableStateOf(false) }
+
+    // Navigate to the live logs once a redeploy returns a deployment id.
+    LaunchedEffect(state.redeployResultDeploymentId) {
+        val deploymentId = state.redeployResultDeploymentId
+        val project = state.redeployTarget
+        if (deploymentId != null && project != null) {
+            onOpenLogs(project, deploymentId)
+            onRedeployResultConsumed()
+        }
+    }
 
     val displayedProjects = remember(state.filteredProjects, selectedFilter) {
         when (selectedFilter) {
@@ -65,6 +81,16 @@ fun ProjectsScreen(
         onInstanceSelected = onInstanceSelected,
         onAddInstanceClicked = onAddInstanceClicked
     )
+
+    if (state.redeployTarget != null && state.redeployResultDeploymentId == null) {
+        RedeployConfirmDialog(
+            projectName = state.redeployTarget.name,
+            isLoading = state.redeployLoading,
+            error = state.redeployError,
+            onConfirm = onRedeployConfirm,
+            onCancel = onRedeployCancel
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -284,7 +310,10 @@ fun ProjectsScreen(
                             ) { project ->
                                 ProjectCard(
                                     project = project,
-                                    onClick = { onProjectClicked(project) }
+                                    onClick = { onProjectClicked(project) },
+                                    mcpRedeployAvailable = state.redeployAvailable,
+                                    onRedeployClick = { onRedeployClick(project) },
+                                    onHistoryClick = { onHistoryClick(project) }
                                 )
                             }
                         }
@@ -293,6 +322,58 @@ fun ProjectsScreen(
             }
         }
     }
+}
+
+@Composable
+private fun RedeployConfirmDialog(
+    projectName: String,
+    isLoading: Boolean,
+    error: String?,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit
+) {
+    val colors = OpenshipAppTheme.colors
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = {
+            Text("Redeploy project?", fontWeight = FontWeight.Bold, color = colors.textHeading)
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "\"$projectName\" will be redeployed from its current source.",
+                    fontSize = 14.sp,
+                    color = colors.textSecondary
+                )
+                if (error != null) {
+                    Text(
+                        text = error,
+                        fontSize = 13.sp,
+                        color = colors.statusFailed
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = !isLoading) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        color = colors.btnPrimaryBg,
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(18.dp)
+                    )
+                } else {
+                    Text("Redeploy")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancel, enabled = !isLoading) {
+                Text("Cancel")
+            }
+        },
+        containerColor = colors.bgCard
+    )
 }
 
 @Composable

@@ -9,21 +9,21 @@ class Base64DecoderTest {
     fun testValidBase64Decode() {
         // "Running build command: ./gradlew assemble" encoded in base64
         val encoded = "UnVubmluZyBidWlsZCBjb21tYW5kOiAuL2dyYWRsZXcgYXNzZW1ibGU="
-        val decoded = Base64Decoder.decodeToString(encoded)
+        val decoded = decodeBase64ToString(encoded)
         assertEquals("Running build command: ./gradlew assemble", decoded)
     }
 
     @Test
     fun testEmptyAndBlankStrings() {
-        assertEquals("", Base64Decoder.decodeToString(""))
-        assertEquals("", Base64Decoder.decodeToString("   "))
+        assertEquals("", decodeBase64ToString(""))
+        assertEquals("", decodeBase64ToString("   "))
     }
 
     @Test
     fun testMultilineBase64String() {
         // Base64 with carriage returns/newlines should be cleanly decoded
         val multiline = "SGVsbG8g\nV29ybGQ="
-        val decoded = Base64Decoder.decodeToString(multiline)
+        val decoded = decodeBase64ToString(multiline)
         assertEquals("Hello World", decoded)
     }
 
@@ -31,7 +31,7 @@ class Base64DecoderTest {
     fun testPlainTextFallback() {
         // If the server accidentally sends plain text, it returns the raw text gracefully
         val plain = "This is not base64 !!! @@@"
-        val decoded = Base64Decoder.decodeToString(plain)
+        val decoded = decodeBase64ToString(plain)
         assertEquals("This is not base64 !!! @@@", decoded)
     }
 }

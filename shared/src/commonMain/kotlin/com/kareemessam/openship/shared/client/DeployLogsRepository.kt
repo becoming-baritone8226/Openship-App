@@ -15,7 +15,7 @@ import kotlinx.serialization.json.Json
 class DeployLogsRepository(
     private val httpClient: HttpClient,
     private val discoveryService: DiscoveryService,
-    private val json: Json = Json { ignoreUnknownKeys = true; isLenient = true }
+    private val json: Json = HttpClientFactory.tolerantJson
 ) {
 
     fun streamDeployLogs(
