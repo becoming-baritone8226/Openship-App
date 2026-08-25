@@ -33,6 +33,7 @@ import com.kareemessam.openship.shared.ui.theme.OpenshipAppTheme
 import com.kareemessam.openship.shared.ui.theme.ThemeMode
 import com.kareemessam.openship.shared.viewmodel.BuildStage
 import com.kareemessam.openship.shared.viewmodel.DeployLogsUiState
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,6 +44,8 @@ fun DeployLogsScreen(
     onSearchChanged: (String) -> Unit,
     onAutoScrollChanged: (Boolean) -> Unit,
     onRetry: () -> Unit,
+    onResumeStream: () -> Unit = {},
+    onPauseStream: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val colors = OpenshipAppTheme.colors
@@ -50,10 +53,28 @@ fun DeployLogsScreen(
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
 
+    LifecycleResumeEffect(Unit) {
+        onResumeStream()
+        onPauseOrDispose {
+            onPauseStream()
+        }
+    }
+
+    val displayedLogs = remember(state.logs, state.searchQuery) {
+        if (state.searchQuery.isBlank()) {
+            state.logs
+        } else {
+            state.logs.filter {
+                it.rawText.contains(state.searchQuery, ignoreCase = true) ||
+                (it.serviceName?.contains(state.searchQuery, ignoreCase = true) == true)
+            }
+        }
+    }
+
     // Auto-scroll effect controlled strictly by autoScroll flag
-    LaunchedEffect(state.filteredLogs.size, state.autoScroll) {
-        if (state.autoScroll && state.filteredLogs.isNotEmpty()) {
-            listState.scrollToItem(state.filteredLogs.size - 1)
+    LaunchedEffect(displayedLogs.size, state.autoScroll) {
+        if (state.autoScroll && displayedLogs.isNotEmpty()) {
+            listState.scrollToItem(displayedLogs.size - 1)
         }
     }
 
@@ -205,7 +226,7 @@ fun DeployLogsScreen(
                         .padding(horizontal = 10.dp, vertical = 8.dp)
                 ) {
                     Text(
-                        text = "${state.filteredLogs.size} lines",
+                        text = "${displayedLogs.size} lines",
                         fontSize = 11.sp,
                         fontFamily = FontFamily.Monospace,
                         color = colors.textMuted
@@ -248,7 +269,7 @@ fun DeployLogsScreen(
                         .weight(1f)
                         .fillMaxWidth()
                 ) {
-                    if (state.filteredLogs.isEmpty() && !state.isStreaming) {
+                    if (displayedLogs.isEmpty() && !state.isStreaming) {
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
@@ -297,7 +318,7 @@ fun DeployLogsScreen(
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             itemsIndexed(
-                                items = state.filteredLogs,
+                                items = displayedLogs,
                                 key = { _, item -> item.id }
                             ) { index, item ->
                                 Row(
@@ -329,12 +350,12 @@ fun DeployLogsScreen(
                     }
 
                     // Floating Auto-Scroll Resume Button
-                    if (!state.autoScroll && state.filteredLogs.isNotEmpty()) {
+                    if (!state.autoScroll && displayedLogs.isNotEmpty()) {
                         FloatingActionButton(
                             onClick = {
                                 onAutoScrollChanged(true)
                                 coroutineScope.launch {
-                                    listState.animateScrollToItem(state.filteredLogs.size - 1)
+                                    listState.animateScrollToItem(displayedLogs.size - 1)
                                 }
                             },
                             containerColor = colors.bgCardElevated,

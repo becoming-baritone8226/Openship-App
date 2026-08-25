@@ -1,5 +1,6 @@
 package com.kareemessam.openship.shared.viewmodel
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kareemessam.openship.shared.client.DiscoveryService
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@Immutable
 data class ConnectUiState(
     val url: String = "http://10.0.2.2:4000",
     val label: String = "My Openship Server",
@@ -79,15 +81,24 @@ class ConnectViewModel(
         }
     }
 
+    private fun validatePat(pat: String, authMode: String): String? {
+        if (authMode == "none") return null
+        if (pat.isBlank()) return "Personal Access Token is required"
+        if (!pat.startsWith("opsh_pat_")) return "Token must start with 'opsh_pat_'"
+        if (pat.length < 52) return "Token appears to be too short (expected opsh_pat_ + 43 characters)"
+        return null
+    }
+
     fun connect() {
         val currentState = _state.value
         val normalizedUrl = discoveryService.normalizeUrl(currentState.url)
         val pat = currentState.pat.trim()
         val env = currentState.discoveredEnv
+        val authMode = env?.authMode ?: "local"
 
-        // Validation
-        if (pat.isEmpty() && env?.authMode != "none") {
-            _state.update { it.copy(connectError = "Personal Access Token (PAT) is required.") }
+        val patError = validatePat(pat, authMode)
+        if (patError != null) {
+            _state.update { it.copy(connectError = patError) }
             return
         }
 
@@ -101,7 +112,7 @@ class ConnectViewModel(
                     label = currentState.label.ifBlank { "Openship Server" },
                     url = normalizedUrl,
                     pat = pat,
-                    authMode = env?.authMode ?: "local",
+                    authMode = authMode,
                     version = env?.version,
                     isDefault = tokenStorage.getActiveInstance() == null,
                     createdAt = now
@@ -114,3 +125,4 @@ class ConnectViewModel(
         }
     }
 }
+

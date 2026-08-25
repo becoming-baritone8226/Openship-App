@@ -47,6 +47,7 @@ kotlin {
 
             // Coroutines & Serialization
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.json)
 
             // Ktor Client (includes SSE in core)

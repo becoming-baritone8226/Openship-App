@@ -22,6 +22,8 @@ import com.kareemessam.openship.shared.ui.components.OpenshipTopBar
 import com.kareemessam.openship.shared.ui.components.SparklineTrendCard
 import com.kareemessam.openship.shared.ui.components.StatusBadge
 import com.kareemessam.openship.shared.ui.components.StatusKind
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kareemessam.openship.shared.ui.theme.OpenshipAppTheme
 import com.kareemessam.openship.shared.viewmodel.MonitorViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -32,10 +34,17 @@ fun ServerMonitorScreen(
     modifier: Modifier = Modifier,
     viewModel: MonitorViewModel = koinViewModel()
 ) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val colors = OpenshipAppTheme.colors
     val stats = state.currentStats
     var isInstanceModalOpen by remember { mutableStateOf(false) }
+
+    LifecycleResumeEffect(Unit) {
+        viewModel.resumeStream()
+        onPauseOrDispose {
+            viewModel.pauseStream()
+        }
+    }
 
     InstanceSwitcherModal(
         isOpen = isInstanceModalOpen,

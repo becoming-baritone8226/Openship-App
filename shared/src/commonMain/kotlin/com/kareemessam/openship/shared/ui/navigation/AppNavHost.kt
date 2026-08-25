@@ -2,9 +2,9 @@ package com.kareemessam.openship.shared.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -18,6 +18,7 @@ import com.kareemessam.openship.shared.ui.screens.logs.DeployLogsScreen
 import com.kareemessam.openship.shared.viewmodel.ConnectViewModel
 import com.kareemessam.openship.shared.viewmodel.DeployLogsViewModel
 import com.kareemessam.openship.shared.viewmodel.DeploymentHistoryViewModel
+import io.ktor.http.decodeURLPart
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -34,7 +35,7 @@ fun AppNavHost(
     ) {
         composable(Screen.Connect.route) {
             val viewModel: ConnectViewModel = koinViewModel()
-            val state by viewModel.state.collectAsState()
+            val state by viewModel.state.collectAsStateWithLifecycle()
 
             ConnectScreen(
                 state = state,
@@ -80,10 +81,11 @@ fun AppNavHost(
             )
         ) { backStackEntry ->
             val deploymentId = backStackEntry.arguments?.getString("deploymentId") ?: ""
-            val projectName = backStackEntry.arguments?.getString("projectName")?.replace("_", "/") ?: ""
+            val rawName = backStackEntry.arguments?.getString("projectName") ?: ""
+            val projectName = rawName.decodeURLPart()
 
             val viewModel: DeployLogsViewModel = koinViewModel()
-            val state by viewModel.state.collectAsState()
+            val state by viewModel.state.collectAsStateWithLifecycle()
 
             LaunchedEffect(deploymentId) {
                 viewModel.initDeployment(projectName, deploymentId)
@@ -94,7 +96,9 @@ fun AppNavHost(
                 onBack = { navController.popBackStack() },
                 onSearchChanged = viewModel::onSearchQueryChanged,
                 onAutoScrollChanged = viewModel::setAutoScroll,
-                onRetry = viewModel::retry
+                onRetry = viewModel::retry,
+                onResumeStream = viewModel::resumeStream,
+                onPauseStream = viewModel::pauseStream
             )
         }
 
@@ -107,14 +111,15 @@ fun AppNavHost(
             )
         ) { backStackEntry ->
             val projectId = backStackEntry.arguments?.getString("projectId") ?: ""
-            val projectName = backStackEntry.arguments?.getString("projectName")?.replace("_", "/") ?: ""
+            val rawName = backStackEntry.arguments?.getString("projectName") ?: ""
+            val projectName = rawName.decodeURLPart()
             val activeDeploymentId = backStackEntry.arguments
                 ?.getString("activeDeploymentId")
                 ?.takeIf { it != "none" }
 
             val tokenStorage: TokenStorage = koinInject()
             val viewModel: DeploymentHistoryViewModel = koinViewModel()
-            val state by viewModel.state.collectAsState()
+            val state by viewModel.state.collectAsStateWithLifecycle()
 
             LaunchedEffect(projectId) {
                 val instance = tokenStorage.getActiveInstance() ?: tokenStorage.loadInstances().firstOrNull()

@@ -1,5 +1,6 @@
 package com.kareemessam.openship.shared.viewmodel
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kareemessam.openship.shared.client.MonitorRepository
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@Immutable
 data class MonitorUiState(
     val activeInstance: InstanceConfig? = null,
     val allInstances: List<InstanceConfig> = emptyList(),
@@ -44,31 +46,31 @@ class MonitorViewModel(
     }
 
     fun loadServersAndStartMonitoring() {
-        val instances = tokenStorage.loadInstances()
-        val activeInstance = tokenStorage.getActiveInstance() ?: instances.firstOrNull()
-
-        if (activeInstance == null) {
-            _state.update { it.copy(activeInstance = null, allInstances = instances, isLoading = false) }
-            return
-        }
-
-        val isCloud = activeInstance.authMode.equals("cloud", ignoreCase = true)
-        _state.update {
-            it.copy(
-                activeInstance = activeInstance,
-                allInstances = instances,
-                isCloudMode = isCloud,
-                isLoading = !isCloud,
-                error = null
-            )
-        }
-
-        if (isCloud) {
-            // Cloud instances use cloud sandboxes; host-level SSH telemetry is not exposed
-            return
-        }
-
         viewModelScope.launch {
+            val instances = tokenStorage.loadInstances()
+            val activeInstance = tokenStorage.getActiveInstance() ?: instances.firstOrNull()
+
+            if (activeInstance == null) {
+                _state.update { it.copy(activeInstance = null, allInstances = instances, isLoading = false) }
+                return@launch
+            }
+
+            val isCloud = activeInstance.authMode.equals("cloud", ignoreCase = true)
+            _state.update {
+                it.copy(
+                    activeInstance = activeInstance,
+                    allInstances = instances,
+                    isCloudMode = isCloud,
+                    isLoading = !isCloud,
+                    error = null
+                )
+            }
+
+            if (isCloud) {
+                // Cloud instances use cloud sandboxes; host-level SSH telemetry is not exposed
+                return@launch
+            }
+
             val result = monitorRepository.getServers(activeInstance)
             result.onSuccess { servers ->
                 val primaryServer = servers.firstOrNull { it.isLocal == true } ?: servers.firstOrNull()
@@ -100,9 +102,11 @@ class MonitorViewModel(
 
     fun switchInstance(instanceId: String) {
         streamJob?.cancel()
-        tokenStorage.setActiveInstance(instanceId)
-        _state.update { it.copy(cpuHistory = emptyList(), memHistory = emptyList(), currentStats = null) }
-        loadServersAndStartMonitoring()
+        viewModelScope.launch {
+            tokenStorage.setActiveInstance(instanceId)
+            _state.update { it.copy(cpuHistory = emptyList(), memHistory = emptyList(), currentStats = null) }
+            loadServersAndStartMonitoring()
+        }
     }
 
     fun selectServer(serverId: String) {
@@ -110,6 +114,22 @@ class MonitorViewModel(
         val server = _state.value.allServers.firstOrNull { it.id == serverId } ?: return
         _state.update { it.copy(activeServer = server, cpuHistory = emptyList(), memHistory = emptyList()) }
         startStreaming(activeInstance, serverId)
+    }
+
+    fun pauseStream() {
+        streamJob?.cancel()
+        streamJob = null
+        _state.update { it.copy(isStreaming = false) }
+    }
+
+    fun resumeStream() {
+        if (streamJob?.isActive == true) return
+        val current = _state.value
+        val activeInstance = current.activeInstance
+        val activeServer = current.activeServer
+        if (activeInstance != null && activeServer != null && !current.isCloudMode) {
+            startStreaming(activeInstance, activeServer.id)
+        }
     }
 
     private fun startStreaming(instance: InstanceConfig, serverId: String) {
@@ -142,3 +162,4 @@ class MonitorViewModel(
         streamJob?.cancel()
     }
 }
+

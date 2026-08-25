@@ -1,19 +1,27 @@
 package com.kareemessam.openship.shared.util
 
-class SeqTracker {
-    var lastSeq: Long = 0L
-        private set
+import kotlin.jvm.Synchronized
+import kotlin.jvm.Volatile
 
+class SeqTracker {
+    @Volatile
+    private var _lastSeq: Long = 0L
+
+    val lastSeq: Long get() = _lastSeq
+
+    @Synchronized
     fun update(seq: Long) {
-        if (seq > lastSeq) {
-            lastSeq = seq
+        if (seq > _lastSeq) {
+            _lastSeq = seq
         }
     }
 
-    fun getResumeParam(): String = lastSeq.toString()
+    fun getResumeParam(): String = _lastSeq.toString()
 
+    @Synchronized
     fun reset() {
-        lastSeq = 0L
+        _lastSeq = 0L
     }
 }
+
 

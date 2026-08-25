@@ -1,5 +1,6 @@
 package com.kareemessam.openship.shared.viewmodel
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kareemessam.openship.shared.client.DeployActionsRepository
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@Immutable
 data class ProjectsUiState(
     val activeInstance: InstanceConfig? = null,
     val allInstances: List<InstanceConfig> = emptyList(),
@@ -26,18 +28,7 @@ data class ProjectsUiState(
     val redeployLoading: Boolean = false,
     val redeployError: String? = null,
     val redeployResultDeploymentId: String? = null
-) {
-    val filteredProjects: List<ProjectSummary>
-        get() = if (searchQuery.isBlank()) {
-            projects
-        } else {
-            projects.filter {
-                it.name.contains(searchQuery, ignoreCase = true) ||
-                it.framework.contains(searchQuery, ignoreCase = true) ||
-                (it.gitRepo?.contains(searchQuery, ignoreCase = true) == true)
-            }
-        }
-}
+)
 
 class ProjectsViewModel(
     private val projectsRepository: ProjectsRepository,
@@ -53,21 +44,23 @@ class ProjectsViewModel(
     }
 
     fun loadInstancesAndProjects() {
-        val instances = tokenStorage.loadInstances()
-        val active = tokenStorage.getActiveInstance() ?: instances.firstOrNull()
+        viewModelScope.launch {
+            val instances = tokenStorage.loadInstances()
+            val active = tokenStorage.getActiveInstance() ?: instances.firstOrNull()
 
-        _state.update {
-            it.copy(
-                activeInstance = active,
-                allInstances = instances
-            )
-        }
-        refreshRedeployAvailability()
+            _state.update {
+                it.copy(
+                    activeInstance = active,
+                    allInstances = instances
+                )
+            }
+            refreshRedeployAvailability()
 
-        if (active != null) {
-            fetchProjects(active, isRefresh = false)
-        } else {
-            _state.update { it.copy(isLoading = false, projects = emptyList()) }
+            if (active != null) {
+                fetchProjects(active, isRefresh = false)
+            } else {
+                _state.update { it.copy(isLoading = false, projects = emptyList()) }
+            }
         }
     }
 
@@ -85,13 +78,17 @@ class ProjectsViewModel(
     }
 
     fun switchInstance(instanceId: String) {
-        tokenStorage.setActiveInstance(instanceId)
-        loadInstancesAndProjects()
+        viewModelScope.launch {
+            tokenStorage.setActiveInstance(instanceId)
+            loadInstancesAndProjects()
+        }
     }
 
     fun deleteInstance(instanceId: String) {
-        tokenStorage.deleteInstance(instanceId)
-        loadInstancesAndProjects()
+        viewModelScope.launch {
+            tokenStorage.deleteInstance(instanceId)
+            loadInstancesAndProjects()
+        }
     }
 
     fun onRedeployClick(project: ProjectSummary) {

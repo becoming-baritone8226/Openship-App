@@ -1,5 +1,6 @@
 package com.kareemessam.openship.shared.viewmodel
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,13 +17,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@Immutable
 data class LogItem(
     val id: Long,
     val rawText: String,
     val parsedText: AnnotatedString,
-    val step: String?,
-    val level: String?,
-    val serviceName: String?
+    val step: String? = null,
+    val level: String? = null,
+    val serviceName: String? = null
 )
 
 enum class BuildStage {
@@ -33,6 +35,7 @@ enum class BuildStage {
     READY
 }
 
+@Immutable
 data class DeployLogsUiState(
     val projectName: String = "",
     val deploymentId: String = "",
@@ -43,22 +46,16 @@ data class DeployLogsUiState(
     val currentStage: BuildStage = BuildStage.CLONE,
     val finalStatus: String? = null,
     val error: String? = null
-) {
-    val filteredLogs: List<LogItem>
-        get() = if (searchQuery.isBlank()) {
-            logs
-        } else {
-            logs.filter {
-                it.rawText.contains(searchQuery, ignoreCase = true) ||
-                (it.serviceName?.contains(searchQuery, ignoreCase = true) == true)
-            }
-        }
-}
+)
 
 class DeployLogsViewModel(
     private val deployLogsRepository: DeployLogsRepository,
     private val tokenStorage: TokenStorage
 ) : ViewModel() {
+
+    companion object {
+        private const val MAX_LOG_ITEMS = 2000
+    }
 
     private val _state = MutableStateFlow(DeployLogsUiState())
     val state: StateFlow<DeployLogsUiState> = _state.asStateFlow()
@@ -95,11 +92,29 @@ class DeployLogsViewModel(
         }
     }
 
-    private fun startStream(deploymentId: String) {
-        val activeInstance = tokenStorage.getActiveInstance() ?: return
+    fun pauseStream() {
+        streamJob?.cancel()
+        streamJob = null
+        _state.update { it.copy(isStreaming = false) }
+    }
 
+    fun resumeStream() {
+        if (streamJob?.isActive == true) return
+        val current = _state.value
+        if (current.deploymentId.isNotBlank()) {
+            startStream(current.deploymentId)
+        }
+    }
+
+    private fun startStream(deploymentId: String) {
         streamJob?.cancel()
         streamJob = viewModelScope.launch {
+            val activeInstance = tokenStorage.getActiveInstance()
+            if (activeInstance == null) {
+                _state.update { it.copy(error = "No active instance found.", isStreaming = false) }
+                return@launch
+            }
+
             _state.update { it.copy(isStreaming = true, error = null) }
 
             deployLogsRepository.streamDeployLogs(activeInstance, deploymentId, seqTracker)
@@ -122,8 +137,14 @@ class DeployLogsViewModel(
 
                             val stage = determineStage(event.step)
                             _state.update { current ->
+                                val combined = current.logs + newItems
+                                val trimmed = if (combined.size > MAX_LOG_ITEMS) {
+                                    combined.takeLast(MAX_LOG_ITEMS)
+                                } else {
+                                    combined
+                                }
                                 current.copy(
-                                    logs = current.logs + newItems,
+                                    logs = trimmed,
                                     currentStage = stage ?: current.currentStage
                                 )
                             }

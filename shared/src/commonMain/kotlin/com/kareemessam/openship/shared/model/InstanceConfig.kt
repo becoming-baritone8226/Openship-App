@@ -12,4 +12,7 @@ data class InstanceConfig(
     val version: String? = null,
     val isDefault: Boolean = false,
     val createdAt: Long = 0L
-)
+) {
+    override fun toString(): String =
+        "InstanceConfig(id=$id, label=$label, url=$url, pat=${if (pat.isBlank()) "empty" else "[REDACTED]"}, authMode=$authMode, version=$version, isDefault=$isDefault, createdAt=$createdAt)"
+}

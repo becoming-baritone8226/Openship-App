@@ -1,5 +1,6 @@
 package com.kareemessam.openship.shared.viewmodel
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kareemessam.openship.shared.client.DeployActionsRepository
@@ -12,7 +13,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Instant
 
+@Immutable
 data class DeploymentHistoryUiState(
     val isLoading: Boolean = false,
     val deployments: List<DeploymentDto> = emptyList(),
@@ -158,47 +161,7 @@ internal fun formatRelativeAge(iso: String?, nowMillis: Long = currentTimeMillis
     }
 }
 
-internal fun parseIsoToMillis(iso: String): Long? = try {
-    if (iso.length < 19) return null
-    val year = iso.substring(0, 4).toInt()
-    val month = iso.substring(5, 7).toInt()
-    val day = iso.substring(8, 10).toInt()
-    val hour = iso.substring(11, 13).toInt()
-    val minute = iso.substring(14, 16).toInt()
-    val second = iso.substring(17, 19).toInt()
-    val days = daysFromCivil(year, month, day)
-    val base = days * 86_400_000L + hour * 3_600_000L + minute * 60_000L + second * 1_000L
-    base - offsetMillis(iso.substring(19))
-} catch (_: Exception) {
-    null
-}
+internal fun parseIsoToMillis(iso: String): Long? = runCatching {
+    Instant.parse(iso).toEpochMilliseconds()
+}.getOrNull()
 
-/** [rest] is everything after seconds: `[.fraction][Z|±HH:MM]` or empty. */
-private fun offsetMillis(rest: String): Long {
-    var i = 0
-    if (rest.isNotEmpty() && rest[0] == '.') {
-        i = 1
-        while (i < rest.length && rest[i].isDigit()) i++
-    }
-    if (i >= rest.length) return 0L
-    return when (rest[i]) {
-        'Z', 'z' -> 0L
-        '+', '-' -> {
-            val sign = if (rest[i] == '-') -1L else 1L
-            val hour = rest.substring(i + 1, i + 3).toInt()
-            val minute = rest.substring(i + 4, i + 6).toInt()
-            sign * (hour * 3_600_000L + minute * 60_000L)
-        }
-        else -> 0L
-    }
-}
-
-private fun daysFromCivil(y: Int, m: Int, d: Int): Long {
-    val yy = if (m <= 2) y - 1 else y
-    val era = (if (yy >= 0) yy else yy - 399) / 400
-    val yoe = yy - era * 400
-    val mp = (m + 9) % 12
-    val doy = (153 * mp + 2) / 5 + d - 1
-    val doe = yoe * 365 + yoe / 4 - yoe / 100 + doy
-    return era * 146_097L + doe - 719_468L
-}

@@ -1,5 +1,7 @@
 package com.kareemessam.openship.shared.ui.navigation
 
+import io.ktor.http.encodeURLPathPart
+
 sealed interface Screen {
     val route: String
 
@@ -15,7 +17,7 @@ sealed interface Screen {
         override val route = "logs/{projectId}/{deploymentId}/{projectName}"
 
         fun createRoute(projectId: String, deploymentId: String, projectName: String): String {
-            val encodedName = projectName.replace("/", "_")
+            val encodedName = projectName.encodeURLPathPart()
             return "logs/$projectId/$deploymentId/$encodedName"
         }
     }
@@ -24,7 +26,7 @@ sealed interface Screen {
         override val route = "history/{projectId}/{projectName}/{activeDeploymentId}"
 
         fun createRoute(projectId: String, projectName: String, activeDeploymentId: String?): String {
-            val encodedName = projectName.replace("/", "_")
+            val encodedName = projectName.encodeURLPathPart()
             val depId = activeDeploymentId ?: "none"
             return "history/$projectId/$encodedName/$depId"
         }

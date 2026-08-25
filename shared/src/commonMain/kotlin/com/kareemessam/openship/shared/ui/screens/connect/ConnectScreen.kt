@@ -207,13 +207,13 @@ fun ConnectScreen(
                             ) {
                                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                     Text(
-                                        text = "Openship v${env.version ?: "0.6.7"}",
+                                        text = "Openship v${env.version}",
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 13.sp,
                                         color = colors.textHeading
                                     )
                                     Text(
-                                        text = "${env.deployMode?.replaceFirstChar { it.uppercase() } ?: "Docker"} · ${env.authMode ?: "none"}",
+                                        text = "${env.deployMode?.replaceFirstChar { it.uppercase() } ?: "Docker"} · ${env.authMode}",
                                         fontSize = 11.sp,
                                         color = colors.textSecondary
                                     )

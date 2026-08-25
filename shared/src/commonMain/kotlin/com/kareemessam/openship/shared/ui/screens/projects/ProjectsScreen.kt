@@ -65,11 +65,20 @@ fun ProjectsScreen(
         }
     }
 
-    val displayedProjects = remember(state.filteredProjects, selectedFilter) {
+    val displayedProjects = remember(state.projects, state.searchQuery, selectedFilter) {
+        val base = if (state.searchQuery.isBlank()) {
+            state.projects
+        } else {
+            state.projects.filter {
+                it.name.contains(state.searchQuery, ignoreCase = true) ||
+                it.framework.contains(state.searchQuery, ignoreCase = true) ||
+                (it.gitRepo?.contains(state.searchQuery, ignoreCase = true) == true)
+            }
+        }
         when (selectedFilter) {
-            ProjectFilterTab.ALL -> state.filteredProjects
-            ProjectFilterTab.ACTIVE -> state.filteredProjects.filter { it.status == ProjectStatus.READY }
-            ProjectFilterTab.BUILDING -> state.filteredProjects.filter { it.status == ProjectStatus.BUILDING || it.status == ProjectStatus.QUEUED }
+            ProjectFilterTab.ALL -> base
+            ProjectFilterTab.ACTIVE -> base.filter { it.status == ProjectStatus.READY }
+            ProjectFilterTab.BUILDING -> base.filter { it.status == ProjectStatus.BUILDING || it.status == ProjectStatus.QUEUED }
         }
     }
 

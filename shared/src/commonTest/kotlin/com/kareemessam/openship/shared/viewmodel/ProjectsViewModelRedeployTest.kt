@@ -61,12 +61,12 @@ class ProjectsViewModelRedeployTest {
     )
 
     private class FakeTokenStorage(private val instances: List<InstanceConfig>) : TokenStorage {
-        override fun saveInstance(config: InstanceConfig) {}
-        override fun loadInstances(): List<InstanceConfig> = instances
-        override fun getActiveInstance(): InstanceConfig? = instances.firstOrNull()
-        override fun setActiveInstance(id: String) {}
-        override fun deleteInstance(id: String) {}
-        override fun clearAll() {}
+        override suspend fun saveInstance(config: InstanceConfig) {}
+        override suspend fun loadInstances(): List<InstanceConfig> = instances
+        override suspend fun getActiveInstance(): InstanceConfig? = instances.firstOrNull()
+        override suspend fun setActiveInstance(id: String) {}
+        override suspend fun deleteInstance(id: String) {}
+        override suspend fun clearAll() {}
     }
 
     private class FakeDeployActionsRepository(

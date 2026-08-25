@@ -5,14 +5,26 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.automirrored.filled.ShowChart
+import androidx.compose.material.icons.automirrored.outlined.ShowChart
+import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kareemessam.openship.shared.model.ProjectSummary
 import com.kareemessam.openship.shared.ui.screens.monitor.ServerMonitorScreen
 import com.kareemessam.openship.shared.ui.screens.projects.ProjectsScreen
@@ -34,7 +46,7 @@ fun MainDashboardScreen(
     modifier: Modifier = Modifier,
     viewModel: ProjectsViewModel = koinViewModel()
 ) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     var selectedTab by remember { mutableStateOf(DashboardTab.PROJECTS) }
     val colors = OpenshipAppTheme.colors
 
@@ -56,7 +68,7 @@ fun MainDashboardScreen(
                             contentDescription = "Projects"
                         )
                     },
-                    label = { Text("Projects", fontSize = 11.sp, fontWeight = if (selectedTab == DashboardTab.PROJECTS) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal) },
+                    label = { Text("Projects", fontSize = 11.sp, fontWeight = if (selectedTab == DashboardTab.PROJECTS) FontWeight.Bold else FontWeight.Normal) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = colors.btnPrimaryText,
                         selectedTextColor = colors.textHeading,
@@ -71,11 +83,11 @@ fun MainDashboardScreen(
                     onClick = { selectedTab = DashboardTab.MONITOR },
                     icon = {
                         Icon(
-                            imageVector = if (selectedTab == DashboardTab.MONITOR) Icons.Filled.ShowChart else Icons.Outlined.ShowChart,
+                            imageVector = if (selectedTab == DashboardTab.MONITOR) Icons.AutoMirrored.Filled.ShowChart else Icons.AutoMirrored.Outlined.ShowChart,
                             contentDescription = "Monitoring"
                         )
                     },
-                    label = { Text("Monitoring", fontSize = 11.sp, fontWeight = if (selectedTab == DashboardTab.MONITOR) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal) },
+                    label = { Text("Monitoring", fontSize = 11.sp, fontWeight = if (selectedTab == DashboardTab.MONITOR) FontWeight.Bold else FontWeight.Normal) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = colors.btnPrimaryText,
                         selectedTextColor = colors.textHeading,

@@ -12,7 +12,9 @@ enum class ThemeMode {
     LIGHT
 }
 
-val LocalThemeMode = compositionLocalOf { mutableStateOf(ThemeMode.DARK) }
+val LocalThemeMode = staticCompositionLocalOf<MutableState<ThemeMode>> {
+    error("LocalThemeMode not provided. Wrap content in OpenshipTheme.")
+}
 
 private val OpenshipDarkColorScheme = darkColorScheme(
     background = OpenshipColors.Dark.BgPage,

@@ -5,6 +5,8 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.kareemessam.openship.shared.model.InstanceConfig
 import com.kareemessam.openship.shared.storage.TokenStorage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -29,7 +31,7 @@ class AndroidTokenStorage(context: Context) : TokenStorage {
 
     private val activeInstanceKey = "__active_instance_id__"
 
-    override fun saveInstance(config: InstanceConfig) {
+    override suspend fun saveInstance(config: InstanceConfig): Unit = withContext(Dispatchers.IO) {
         val jsonStr = json.encodeToString(config)
         prefs.edit().putString(config.id, jsonStr).apply()
 
@@ -38,7 +40,7 @@ class AndroidTokenStorage(context: Context) : TokenStorage {
         }
     }
 
-    override fun loadInstances(): List<InstanceConfig> {
+    override suspend fun loadInstances(): List<InstanceConfig> = withContext(Dispatchers.IO) {
         val instances = mutableListOf<InstanceConfig>()
         val allEntries = prefs.all
         for ((key, value) in allEntries) {
@@ -52,27 +54,27 @@ class AndroidTokenStorage(context: Context) : TokenStorage {
                 }
             }
         }
-        return instances.sortedByDescending { it.createdAt }
+        instances.sortedByDescending { it.createdAt }
     }
 
-    override fun getActiveInstance(): InstanceConfig? {
+    override suspend fun getActiveInstance(): InstanceConfig? = withContext(Dispatchers.IO) {
         val activeId = prefs.getString(activeInstanceKey, null)
         if (activeId != null) {
             val jsonStr = prefs.getString(activeId, null)
             if (jsonStr != null) {
                 try {
-                    return json.decodeFromString<InstanceConfig>(jsonStr)
+                    return@withContext json.decodeFromString<InstanceConfig>(jsonStr)
                 } catch (_: Exception) {}
             }
         }
-        return loadInstances().firstOrNull()
+        loadInstances().firstOrNull()
     }
 
-    override fun setActiveInstance(id: String) {
+    override suspend fun setActiveInstance(id: String): Unit = withContext(Dispatchers.IO) {
         prefs.edit().putString(activeInstanceKey, id).apply()
     }
 
-    override fun deleteInstance(id: String) {
+    override suspend fun deleteInstance(id: String): Unit = withContext(Dispatchers.IO) {
         prefs.edit().remove(id).apply()
         if (prefs.getString(activeInstanceKey, null) == id) {
             val remaining = loadInstances().firstOrNull { it.id != id }
@@ -84,7 +86,7 @@ class AndroidTokenStorage(context: Context) : TokenStorage {
         }
     }
 
-    override fun clearAll() {
+    override suspend fun clearAll(): Unit = withContext(Dispatchers.IO) {
         prefs.edit().clear().apply()
     }
 }
