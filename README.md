@@ -5,7 +5,7 @@
 <h1 align="center">OpenShip Android</h1>
 
 <p align="center">
-  <strong>Modern mobile companion for <a href="https://github.com/oblien/openship">Openship</a> — the open-source, self-hostable deployment platform.</strong>
+  <strong> Unofficial Android client for  <a href="https://github.com/oblien/openship">Openship</a> — the open-source, self-hostable deployment platform.</strong>
 </p>
 
 <p align="center">
@@ -105,6 +105,12 @@ OPENSHIP_STORE_PASSWORD=...
 OPENSHIP_KEY_ALIAS=...
 OPENSHIP_KEY_PASSWORD=...
 ```
+
+### CI Releases
+
+Pushing a tag (`v*`, e.g. `v0.2.0` — must match `versionName`) triggers [.github/workflows/release.yml](.github/workflows/release.yml): runs unit tests, builds the per-ABI release APKs, and publishes a GitHub Release with them plus the R8 `mapping.txt`.
+
+For signed releases, add these repo secrets: `ANDROID_KEYSTORE_BASE64` (base64 of your keystore), `OPENSHIP_STORE_PASSWORD`, `OPENSHIP_KEY_ALIAS`, `OPENSHIP_KEY_PASSWORD`. Without secrets the workflow still publishes unsigned APKs.
 
 Play Store: prefer `./gradlew :androidApp:bundleRelease` (AAB); ABI/language/density splits stay enabled in the bundle.
 
