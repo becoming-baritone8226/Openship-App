@@ -46,113 +46,81 @@ fun ProjectCard(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(14.dp))
             .background(colors.bgCard)
-            .border(1.dp, colors.borderCard, RoundedCornerShape(16.dp))
+            .border(1.dp, colors.borderCard, RoundedCornerShape(14.dp))
             .clickable(onClick = onClick)
-            .padding(18.dp)
+            .padding(16.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Header: Mac window dots + Status Badge
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                MacWindowDots()
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    IconButton(
-                        onClick = onHistoryClick,
-                        modifier = Modifier.size(28.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.History,
-                            contentDescription = "Deployment history",
-                            tint = colors.textSecondary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                    if (mcpRedeployAvailable) {
-                        IconButton(
-                            onClick = onRedeployClick,
-                            modifier = Modifier.size(28.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = "Redeploy",
-                                tint = colors.textSecondary,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    }
-                    StatusBadge(
-                        text = project.statusText,
-                        kind = statusKind,
-                        pulseDot = project.status == ProjectStatus.BUILDING || project.status == ProjectStatus.READY
-                    )
-                }
-            }
-
-            // Project Title & Framework Info
+            // Top Row: Framework Icon Tile + Project Title & Subtitle + Status Badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Framework Squircle Icon Tile (matching Openship dashboard)
+                // Framework Tile
                 Box(
                     modifier = Modifier
-                        .size(44.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(colors.bgPill)
-                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(12.dp)),
+                        .size(38.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(colors.bgSubtle)
+                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(10.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = getFrameworkEmoji(project.framework),
-                        fontSize = 20.sp
+                    FrameworkIcon(
+                        framework = project.framework,
+                        size = 22.dp
                     )
                 }
 
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = project.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.textHeading,
-                        fontSize = 16.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
+                            text = project.name,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colors.textHeading,
+                            fontSize = 15.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp)
+                    ) {
+                        Text(
                             text = project.framework.replaceFirstChar { it.uppercase() },
-                            fontSize = 12.sp,
-                            color = colors.textSecondary,
+                            fontSize = 11.sp,
+                            color = colors.textMuted,
                             fontWeight = FontWeight.Medium
                         )
                         Text(
                             text = "·",
-                            fontSize = 12.sp,
-                            color = colors.textMuted
+                            fontSize = 11.sp,
+                            color = colors.textGhost
                         )
                         Text(
                             text = "Production",
-                            fontSize = 12.sp,
+                            fontSize = 11.sp,
                             color = colors.textMuted
                         )
                     }
                 }
+
+                StatusBadge(
+                    text = project.statusText,
+                    kind = statusKind,
+                    pulseDot = project.status == ProjectStatus.BUILDING || project.status == ProjectStatus.READY,
+                    compact = true
+                )
             }
 
             // Git & Branch Pill
@@ -161,11 +129,11 @@ fun ProjectCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
-                        .background(colors.bgPill)
+                        .background(colors.bgSubtle)
                         .border(1.dp, colors.borderSubtle, RoundedCornerShape(8.dp))
                         .padding(horizontal = 10.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.CallSplit,
@@ -175,14 +143,14 @@ fun ProjectCard(
                     )
                     Text(
                         text = project.gitBranch ?: "main",
-                        fontSize = 12.sp,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
-                        color = colors.textHeading,
+                        color = colors.textStrong,
                         fontFamily = FontFamily.Monospace
                     )
                     if (!project.gitRepo.isNullOrBlank()) {
                         Text(
-                            text = project.gitRepo,
+                            text = "· ${project.gitRepo}",
                             fontSize = 11.sp,
                             color = colors.textMuted,
                             maxLines = 1,
@@ -193,47 +161,92 @@ fun ProjectCard(
                 }
             }
 
-            // Live SSL / Domain Badge (exact matching Openship dashboard screenshot)
+            // Bottom Row: Live URL on left, Quick Actions (History, Redeploy, Logs) on right
             val portText = if (project.hostPort != null) ":${project.hostPort}" else ":8080"
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
+                // Host / Port indicator
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                    modifier = Modifier.weight(1f, fill = false)
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(6.dp)
+                            .size(5.dp)
                             .clip(CircleShape)
-                            .background(colors.statusActive)
+                            .background(if (project.status == ProjectStatus.READY) colors.statusActive else colors.textMuted)
                     )
                     Text(
-                        text = "live at localhost$portText",
+                        text = "localhost$portText",
                         fontSize = 11.sp,
                         color = colors.textSecondary,
-                        fontFamily = FontFamily.Monospace
+                        fontFamily = FontFamily.Monospace,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
 
+                // Action Buttons
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Text(
-                        text = "Logs",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.textHeading
-                    )
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = "View Logs",
-                        tint = colors.textHeading,
-                        modifier = Modifier.size(14.dp)
-                    )
+                    // History Icon Button
+                    IconButton(
+                        onClick = onHistoryClick,
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.History,
+                            contentDescription = "Deployment history",
+                            tint = colors.textMuted,
+                            modifier = Modifier.size(15.dp)
+                        )
+                    }
+
+                    // Redeploy Icon Button (if MCP available)
+                    if (mcpRedeployAvailable) {
+                        IconButton(
+                            onClick = onRedeployClick,
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Redeploy",
+                                tint = colors.textMuted,
+                                modifier = Modifier.size(15.dp)
+                            )
+                        }
+                    }
+
+                    // View Logs Pill
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(colors.bgSubtle)
+                            .border(1.dp, colors.borderSubtle, RoundedCornerShape(6.dp))
+                            .clickable(onClick = onClick)
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "Logs",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = colors.textHeading
+                        )
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = "View Logs",
+                            tint = colors.textMuted,
+                            modifier = Modifier.size(11.dp)
+                        )
+                    }
                 }
             }
         }
@@ -258,3 +271,4 @@ private fun getFrameworkEmoji(framework: String): String {
         else -> "📦"
     }
 }
+

@@ -56,11 +56,11 @@ fun InstanceSwitcherModal(
                         imageVector = Icons.Default.Dns,
                         contentDescription = "Instances",
                         tint = colors.textHeading,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                     Text(
                         text = "Connected Instances",
-                        fontSize = 17.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = colors.textHeading
                     )
@@ -74,7 +74,7 @@ fun InstanceSwitcherModal(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Close",
                         tint = colors.textMuted,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }
@@ -85,7 +85,7 @@ fun InstanceSwitcherModal(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Text(
-                    text = "Select an active Openship instance to manage projects and telemetry:",
+                    text = "Select an active Openship server to manage:",
                     fontSize = 12.sp,
                     color = colors.textMuted
                 )
@@ -102,18 +102,18 @@ fun InstanceSwitcherModal(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(if (isSelected) colors.bgCardElevated else colors.bgCard)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (isSelected) colors.bgSubtle else colors.bgPage)
                                 .border(
                                     1.dp,
-                                    if (isSelected) colors.borderFocus else colors.borderCard,
-                                    RoundedCornerShape(12.dp)
+                                    if (isSelected) colors.borderFocus else colors.borderSubtle,
+                                    RoundedCornerShape(10.dp)
                                 )
                                 .clickable {
                                     onInstanceSelected(instance.id)
                                     onDismiss()
                                 }
-                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -124,16 +124,16 @@ fun InstanceSwitcherModal(
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(10.dp)
+                                        .size(8.dp)
                                         .clip(CircleShape)
-                                        .background(if (isSelected) colors.statusActive else colors.textMuted)
+                                        .background(if (isSelected) colors.statusActive else colors.textGhost)
                                 )
 
                                 Column {
                                     Text(
                                         text = instance.label,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                        fontSize = 14.sp,
+                                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                                        fontSize = 13.sp,
                                         color = if (isSelected) colors.textHeading else colors.textPrimary,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
@@ -157,7 +157,7 @@ fun InstanceSwitcherModal(
                                         imageVector = Icons.Default.Check,
                                         contentDescription = "Active",
                                         tint = colors.statusActive,
-                                        modifier = Modifier.size(18.dp)
+                                        modifier = Modifier.size(16.dp)
                                     )
                                 }
 
@@ -186,7 +186,7 @@ fun InstanceSwitcherModal(
                     onDismiss()
                     onAddInstanceClicked()
                 },
-                shape = RoundedCornerShape(10.dp),
+                shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colors.btnPrimaryBg,
                     contentColor = colors.btnPrimaryText
@@ -207,7 +207,8 @@ fun InstanceSwitcherModal(
             }
         },
         containerColor = colors.bgCard,
-        shape = RoundedCornerShape(20.dp),
-        tonalElevation = 6.dp
+        shape = RoundedCornerShape(16.dp),
+        tonalElevation = 4.dp
     )
 }
+

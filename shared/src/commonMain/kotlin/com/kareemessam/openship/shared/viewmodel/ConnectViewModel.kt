@@ -34,11 +34,6 @@ class ConnectViewModel(
     private val _state = MutableStateFlow(ConnectUiState())
     val state: StateFlow<ConnectUiState> = _state.asStateFlow()
 
-    init {
-        // Auto-probe initial default URL
-        probeUrl()
-    }
-
     fun onUrlChanged(newUrl: String) {
         _state.update { it.copy(url = newUrl, discoveredEnv = null, probeError = null, connectError = null) }
     }

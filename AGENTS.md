@@ -8,8 +8,8 @@
 **Openship-App** is an unofficial Android client for [Openship](https://github.com/oblien/openship), the open-source self-hostable deployment platform. Built with Kotlin Multiplatform (KMP) and Compose Multiplatform, using the **Model Context Protocol (MCP)** as the primary API layer and **Server-Sent Events (SSE)** for real-time streaming.
 
 - **License**: Apache-2.0
-- **Status**: Pre-implementation (base version v0.1.0 — read-only)
-- **Relationship**: Unofficial community client, built with the Openship founder's blessing
+- **Status**: v0.1 read-only complete; v0.2 MCP redeploy/rollback complete. Unofficial community client.
+- **Relationship**: Unofficial community client for [Openship](https://github.com/oblien/openship) — not affiliated unless upstream says otherwise
 
 ## Architecture & Protocol Strategy
 

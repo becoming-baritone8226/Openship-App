@@ -28,7 +28,7 @@ val sharedModule = module {
     single { DeployActionsRepository(get()) }
     single { DeploymentsRepository(get(), get()) }
     viewModel { ConnectViewModel(get(), get()) }
-    viewModel { ProjectsViewModel(get(), get(), get()) }
+    viewModel { ProjectsViewModel(get(), get(), get(), get()) }
     viewModel { DeployLogsViewModel(get(), get()) }
     viewModel { MonitorViewModel(get(), get()) }
     viewModel { DeploymentHistoryViewModel(get(), get()) }

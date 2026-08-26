@@ -23,7 +23,7 @@ This file is the single source of truth and comprehensive working handoff for th
 - [x] **Slice 4: Real-Time Server Monitoring** (`/api/system/monitor/stream`, 3-second SSE telemetry, CPU/RAM/Disk circular gauges, rolling gradient sparklines, load averages, uptime)
 - [x] **Official Openship Design Language & Themes**: 1:1 token-level parity with web dashboard (`theme.css`) for both **Dark Mode** (`#000000`) and **Light Mode** (`#F9F9F9`) with instant in-app toggle.
 - [x] **Custom Centered Logo & Adaptive Launcher Icons**: True extracted artwork (Open ring + Rocket + Cargo ship), mathematically centered at `(512, 512)` with background removed, exported across all density mipmaps and in-app Compose UI.
-- [x] **Automated Port Forwarding & Direct Wi-Fi Connectivity**: Automatic Gradle `reverseAdbPorts` lifecycle task + direct LAN IP presets (`192.168.1.112:4000`) to eliminate manual port reversing forever.
+- [x] **Automated Port Forwarding & Direct Wi-Fi Connectivity**: Automatic Gradle `reverseAdbPorts` lifecycle task + direct LAN IP presets (`http://<lan-ip>:4000`) to eliminate manual port reversing forever.
 
 ### Phase 2 Active Scope (v0.2.0 - MCP Actions)
 
@@ -106,7 +106,7 @@ _Avoid_: degraded mode, disabled app
 
 ## 🎨 1:1 Openship Design System Tokens
 
-Tokens are mapped directly from Openship Web Dashboard [`openship/apps/dashboard/src/styles/theme.css`](file:///home/kareemessam_me/Desktop/Oblian/openship/apps/dashboard/src/styles/theme.css):
+Tokens are mapped directly from Openship Web Dashboard [`openship/apps/dashboard/src/styles/theme.css`](openship/apps/dashboard/src/styles/theme.css):
 
 | Token | Dark Theme (`#000000`) | Light Theme (`#F9F9F9`) |
 |---|---|---|
@@ -196,17 +196,17 @@ Openship-App/
 ## 🔌 Networking & Local Server Bridge Notes
 
 ### Host Server Setup:
-- Openship Dashboard / API: `http://localhost:4000` (or local Wi-Fi `http://192.168.1.112:4000`)
+- Openship Dashboard / API: `http://localhost:4000` (or local Wi-Fi `http://<lan-ip>:4000`)
 - Deployed Spring Boot Container (`openship-personal-finance-tracker-api-dep_v5Smbwvw3A7irNI_`):
   - Host Loopback Port: **`20000`** ➔ Container Port: **`8080`**
   - Health Check: `http://localhost:20000/actuator/health` returns `UP`.
 - PostgreSQL Database on Host:
   - Port `5432` configured with `listen_addresses = '*'` in `/etc/postgresql/16/main/postgresql.conf`.
-  - `/etc/postgresql/16/main/pg_hba.conf` permits Docker bridge `172.17.0.0/16` and host IP `192.168.1.112`.
+  - `/etc/postgresql/16/main/pg_hba.conf` permits Docker bridge `172.17.0.0/16` and host IP `<lan-ip>`.
 
 ### Android Port Forwarding:
 1. **Automated Gradle Hook**: `./gradlew installDebug` automatically runs `adb reverse tcp:4000 tcp:4000` and `adb reverse tcp:20000 tcp:20000`.
-2. **Wi-Fi Connectivity**: Phone can connect directly to `http://192.168.1.112:4000` over Wi-Fi without needing USB or ADB reverse.
+2. **Wi-Fi Connectivity**: Phone can connect directly to `http://<lan-ip>:4000` over Wi-Fi without needing USB or ADB reverse.
 
 ---
 

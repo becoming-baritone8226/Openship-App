@@ -4,8 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,15 +19,14 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kareemessam.openship.shared.ui.components.CircularMetricGauge
 import com.kareemessam.openship.shared.ui.components.InstanceSwitcherModal
-import com.kareemessam.openship.shared.ui.components.MacWindowDots
 import com.kareemessam.openship.shared.ui.components.OpenshipTopBar
 import com.kareemessam.openship.shared.ui.components.SparklineTrendCard
 import com.kareemessam.openship.shared.ui.components.StatusBadge
 import com.kareemessam.openship.shared.ui.components.StatusKind
-import androidx.lifecycle.compose.LifecycleResumeEffect
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kareemessam.openship.shared.ui.theme.OpenshipAppTheme
 import com.kareemessam.openship.shared.viewmodel.MonitorViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -56,13 +59,12 @@ fun ServerMonitorScreen(
     )
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            Column(modifier = Modifier.background(colors.bgPage)) {
-                OpenshipTopBar(
-                    instanceLabel = state.activeInstance?.label,
-                    onSwitchInstance = { isInstanceModalOpen = true }
-                )
-            }
+            OpenshipTopBar(
+                instanceLabel = state.activeInstance?.label,
+                onSwitchInstance = { isInstanceModalOpen = true }
+            )
         },
         containerColor = colors.bgPage,
         modifier = modifier
@@ -72,8 +74,8 @@ fun ServerMonitorScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             // Header
             Row(
@@ -85,9 +87,9 @@ fun ServerMonitorScreen(
                     Text(
                         text = "Monitoring",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 22.sp,
+                        fontSize = 20.sp,
                         color = colors.textHeading,
-                        letterSpacing = (-0.4).sp
+                        letterSpacing = (-0.3).sp
                     )
                     Text(
                         text = if (state.isCloudMode) "Openship Cloud telemetry overview" else "Real-time host telemetry & metrics",
@@ -99,7 +101,7 @@ fun ServerMonitorScreen(
                 StatusBadge(
                     text = when {
                         state.isCloudMode -> "Cloud Mode"
-                        state.isStreaming -> "Telemetry Live"
+                        state.isStreaming -> "Live (3s)"
                         state.isLoading -> "Connecting"
                         else -> "Idle"
                     },
@@ -108,7 +110,8 @@ fun ServerMonitorScreen(
                         state.isStreaming -> StatusKind.SUCCESS
                         else -> StatusKind.WARNING
                     },
-                    pulseDot = state.isStreaming
+                    pulseDot = state.isStreaming,
+                    compact = true
                 )
             }
 
@@ -117,32 +120,32 @@ fun ServerMonitorScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(14.dp))
                         .background(colors.bgCard)
-                        .border(1.dp, colors.borderCard, RoundedCornerShape(16.dp))
-                        .padding(20.dp)
+                        .border(1.dp, colors.borderCard, RoundedCornerShape(14.dp))
+                        .padding(18.dp)
                 ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(colors.bgPill)
-                                    .border(1.dp, colors.borderSubtle, RoundedCornerShape(10.dp)),
+                                    .size(36.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(colors.bgSubtle)
+                                    .border(1.dp, colors.borderSubtle, RoundedCornerShape(8.dp)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(text = "☁️", fontSize = 20.sp)
+                                Text(text = "☁️", fontSize = 18.sp)
                             }
 
                             Column {
                                 Text(
                                     text = "Openship Cloud Instance",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 14.sp,
                                     color = colors.textHeading
                                 )
                                 Text(
@@ -154,9 +157,9 @@ fun ServerMonitorScreen(
                         }
 
                         Text(
-                            text = "Live host telemetry (CPU/RAM/Disk via SSH) is designed for self-hosted instances. On Openship Cloud, deployments run in managed sandboxes. You can monitor your active project deployments directly in the Projects tab.",
-                            fontSize = 13.sp,
-                            lineHeight = 18.sp,
+                            text = "Live host telemetry (CPU/RAM/Disk via SSH) is designed for self-hosted servers. On Openship Cloud, deployments run in managed sandboxes. You can monitor your active project deployments in the Projects tab.",
+                            fontSize = 12.sp,
+                            lineHeight = 17.sp,
                             color = colors.textSecondary
                         )
                     }
@@ -168,31 +171,43 @@ fun ServerMonitorScreen(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(14.dp))
                         .background(colors.bgCard)
-                        .border(1.dp, colors.statusFailed.copy(alpha = 0.3f), RoundedCornerShape(14.dp))
-                        .padding(16.dp)
+                        .border(1.dp, colors.statusFailedBorder, RoundedCornerShape(14.dp))
+                        .padding(18.dp)
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(
-                            text = "Failed to load telemetry",
-                            fontWeight = FontWeight.Bold,
-                            color = colors.statusFailed,
-                            fontSize = 14.sp
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ErrorOutline,
+                                contentDescription = null,
+                                tint = colors.statusFailed,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = "Telemetry Stream Offline",
+                                fontWeight = FontWeight.Bold,
+                                color = colors.statusFailed,
+                                fontSize = 14.sp
+                            )
+                        }
                         Text(
                             text = state.error ?: "Unable to reach server telemetry stream.",
                             fontSize = 12.sp,
-                            color = colors.textMuted
+                            color = colors.textSecondary
                         )
                         Button(
                             onClick = { viewModel.loadServersAndStartMonitoring() },
                             shape = RoundedCornerShape(8.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = colors.bgPill,
-                                contentColor = colors.textHeading
+                                containerColor = colors.btnPrimaryBg,
+                                contentColor = colors.btnPrimaryText
                             ),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
                             modifier = Modifier.padding(top = 4.dp)
                         ) {
-                            Text("Retry", fontSize = 12.sp)
+                            Text("Retry", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }
@@ -201,62 +216,62 @@ fun ServerMonitorScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(14.dp))
                         .background(colors.bgCard)
-                        .border(1.dp, colors.borderCard, RoundedCornerShape(16.dp))
-                        .padding(18.dp)
+                        .border(1.dp, colors.borderCard, RoundedCornerShape(14.dp))
+                        .padding(16.dp)
                 ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            MacWindowDots()
-
-                            if (stats != null && stats.uptimeSeconds > 0) {
-                                val uptimeStr = formatUptime(stats.uptimeSeconds)
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Text(
-                                        text = "Uptime: $uptimeStr",
-                                        fontSize = 11.sp,
-                                        fontFamily = FontFamily.Monospace,
-                                        color = colors.textSecondary
-                                    )
-                                }
-                            }
-                        }
-
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(colors.bgPill)
-                                    .border(1.dp, colors.borderSubtle, RoundedCornerShape(10.dp)),
+                                    .size(36.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(colors.bgSubtle)
+                                    .border(1.dp, colors.borderSubtle, RoundedCornerShape(8.dp)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(text = "🖥️", fontSize = 18.sp)
+                                Icon(
+                                    imageVector = Icons.Default.Dns,
+                                    contentDescription = null,
+                                    tint = colors.textHeading,
+                                    modifier = Modifier.size(18.dp)
+                                )
                             }
 
-                            Column {
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = state.activeServer?.name ?: "This Server",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 14.sp,
                                     color = colors.textHeading
                                 )
                                 Text(
-                                    text = "Deploy Mode: Docker · Host: ${state.activeInstance?.url ?: "localhost"}",
+                                    text = "Docker Engine · ${state.activeInstance?.url ?: "localhost"}",
                                     fontSize = 11.sp,
                                     color = colors.textMuted
                                 )
+                            }
+
+                            if (stats != null && stats.uptimeSeconds > 0) {
+                                val uptimeStr = formatUptime(stats.uptimeSeconds)
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(colors.bgSubtle)
+                                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(6.dp))
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Text(
+                                        text = "Up: $uptimeStr",
+                                        fontSize = 10.sp,
+                                        fontFamily = FontFamily.Monospace,
+                                        color = colors.textSecondary
+                                    )
+                                }
                             }
                         }
                     }
@@ -265,7 +280,7 @@ fun ServerMonitorScreen(
                 // 3 Circular Gauges: CPU, Memory, Disk
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     val cpuVal = stats?.cpu?.toFloat() ?: 0f
                     CircularMetricGauge(
@@ -281,7 +296,7 @@ fun ServerMonitorScreen(
                     CircularMetricGauge(
                         percentage = memPercent,
                         label = "RAM",
-                        valueSubtext = "$memUsedGb / $memTotalGb GB",
+                        valueSubtext = "$memUsedGb/$memTotalGb GB",
                         modifier = Modifier.weight(1f)
                     )
 
@@ -291,7 +306,7 @@ fun ServerMonitorScreen(
                     CircularMetricGauge(
                         percentage = diskPercent,
                         label = "Disk",
-                        valueSubtext = "$diskUsedGb / $diskTotalGb GB",
+                        valueSubtext = "$diskUsedGb/$diskTotalGb GB",
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -321,12 +336,12 @@ fun ServerMonitorScreen(
                             .clip(RoundedCornerShape(14.dp))
                             .background(colors.bgCard)
                             .border(1.dp, colors.borderCard, RoundedCornerShape(14.dp))
-                            .padding(16.dp)
+                            .padding(14.dp)
                     ) {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
                                 text = "SYSTEM LOAD AVERAGES",
-                                fontSize = 11.sp,
+                                fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.textMuted,
                                 letterSpacing = 0.5.sp
@@ -359,14 +374,14 @@ private fun LoadPill(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(8.dp))
-            .background(colors.bgPill)
+            .background(colors.bgSubtle)
             .border(1.dp, colors.borderSubtle, RoundedCornerShape(8.dp))
-            .padding(vertical = 8.dp, horizontal = 10.dp),
+            .padding(vertical = 8.dp, horizontal = 8.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(text = label, fontSize = 10.sp, color = colors.textMuted)
-            Text(text = value, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = colors.textHeading, fontFamily = FontFamily.Monospace)
+            Text(text = value, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = colors.textHeading, fontFamily = FontFamily.Monospace)
         }
     }
 }
@@ -382,3 +397,4 @@ private fun formatUptime(seconds: Long): String {
     val mins = (seconds % 3600) / 60
     return if (days > 0) "${days}d ${hours}h" else "${hours}h ${mins}m"
 }
+

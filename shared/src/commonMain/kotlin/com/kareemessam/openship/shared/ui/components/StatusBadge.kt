@@ -34,7 +34,8 @@ fun StatusBadge(
     kind: StatusKind,
     modifier: Modifier = Modifier,
     showDot: Boolean = true,
-    pulseDot: Boolean = false
+    pulseDot: Boolean = false,
+    compact: Boolean = false
 ) {
     val theme = OpenshipAppTheme.colors
     val style: StatusStyle = when (kind) {
@@ -60,19 +61,24 @@ fun StatusBadge(
         rememberUpdatedState(1f)
     }
 
+    val hPad = if (compact) 8.dp else 10.dp
+    val vPad = if (compact) 3.dp else 5.dp
+    val fontSize = if (compact) 11.sp else 12.sp
+    val dotSize = if (compact) 5.dp else 6.dp
+
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(999.dp))
             .background(style.bg)
             .border(1.dp, style.border, RoundedCornerShape(999.dp))
-            .padding(horizontal = 10.dp, vertical = 4.dp),
+            .padding(horizontal = hPad, vertical = vPad),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+        horizontalArrangement = Arrangement.spacedBy(if (compact) 5.dp else 6.dp)
     ) {
         if (showDot) {
             Box(
                 modifier = Modifier
-                    .size(6.dp)
+                    .size(dotSize)
                     .alpha(dotAlpha)
                     .background(style.solid, CircleShape)
             )
@@ -80,9 +86,10 @@ fun StatusBadge(
         Text(
             text = text,
             color = style.fg,
-            fontSize = 12.sp,
+            fontSize = fontSize,
             fontWeight = FontWeight.SemiBold,
-            lineHeight = 14.sp
+            lineHeight = fontSize
         )
     }
 }
+

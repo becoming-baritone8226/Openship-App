@@ -4,6 +4,7 @@ import com.kareemessam.openship.shared.client.DeployActionsRepository
 import com.kareemessam.openship.shared.client.DiscoveryService
 import com.kareemessam.openship.shared.client.HttpClientFactory
 import com.kareemessam.openship.shared.client.McpClient
+import com.kareemessam.openship.shared.client.McpConnectionManager
 import com.kareemessam.openship.shared.client.ProjectsRepository
 import com.kareemessam.openship.shared.model.InstanceConfig
 import com.kareemessam.openship.shared.model.ProjectStatus
@@ -87,7 +88,9 @@ class ProjectsViewModelRedeployTest {
     private fun createVm(deployRepo: DeployActionsRepository): ProjectsViewModel {
         val http = HttpClientFactory.create()
         val projectsRepository = ProjectsRepository(http, DiscoveryService(http))
-        return ProjectsViewModel(projectsRepository, FakeTokenStorage(listOf(instance)), deployRepo)
+        val tokenStorage = FakeTokenStorage(listOf(instance))
+        val mcp = McpClient(HttpClientFactory.create(), DiscoveryService(HttpClientFactory.create()))
+        return ProjectsViewModel(projectsRepository, tokenStorage, deployRepo, McpConnectionManager(mcp, tokenStorage))
     }
 
     private fun mcpClient() = McpClient(HttpClientFactory.create(), DiscoveryService(HttpClientFactory.create()))

@@ -29,6 +29,9 @@ import com.kareemessam.openship.shared.ui.theme.ThemeMode
 import org.koin.compose.koinInject
 
 import androidx.compose.runtime.rememberCoroutineScope
+import coil3.ImageLoader
+import coil3.compose.setSingletonImageLoaderFactory
+import coil3.svg.SvgDecoder
 import kotlinx.coroutines.launch
 
 @Composable
@@ -36,6 +39,14 @@ fun App(
     tokenStorage: TokenStorage = koinInject(),
     mcpConnectionManager: McpConnectionManager = koinInject()
 ) {
+    setSingletonImageLoaderFactory { context ->
+        ImageLoader.Builder(context)
+            .components {
+                add(SvgDecoder.Factory())
+            }
+            .build()
+    }
+
     val themeModeState = remember { mutableStateOf(ThemeMode.DARK) }
     var startDestination by remember { mutableStateOf<String?>(null) }
     val coroutineScope = rememberCoroutineScope()
@@ -68,14 +79,15 @@ fun App(
     }
 
     OpenshipTheme(themeModeState = themeModeState) {
+        val colors = com.kareemessam.openship.shared.ui.theme.OpenshipAppTheme.colors
         val currentStart = startDestination
         if (currentStart == null) {
             Box(
-                modifier = Modifier.fillMaxSize().background(Color(0xFF0F172A)),
+                modifier = Modifier.fillMaxSize().background(colors.bgPage),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(
-                    color = Color.White,
+                    color = colors.btnPrimaryBg,
                     modifier = Modifier.size(36.dp)
                 )
             }

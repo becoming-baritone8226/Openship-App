@@ -59,6 +59,11 @@ kotlin {
             // MCP client foundation
             implementation(libs.mcp.sdk.client)
 
+            // Coil 3 Image & SVG Loading
+            implementation(libs.coil.compose)
+            implementation(libs.coil.network.ktor3)
+            implementation(libs.coil.svg)
+
             // Koin Dependency Injection
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
@@ -67,6 +72,7 @@ kotlin {
 
         androidMain.dependencies {
             // Platform Engines & Security
+            implementation(libs.androidx.core.ktx)
             implementation(libs.ktor.client.okhttp)
             implementation(libs.okhttp)
             implementation(libs.androidx.security.crypto)

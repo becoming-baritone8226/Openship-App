@@ -5,6 +5,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -25,15 +26,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kareemessam.openship.shared.ui.components.MacWindowDots
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.kareemessam.openship.shared.ui.components.StatusBadge
 import com.kareemessam.openship.shared.ui.components.StatusKind
+import com.kareemessam.openship.shared.ui.components.TerminalWindowDots
 import com.kareemessam.openship.shared.ui.theme.LocalThemeMode
 import com.kareemessam.openship.shared.ui.theme.OpenshipAppTheme
 import com.kareemessam.openship.shared.ui.theme.ThemeMode
 import com.kareemessam.openship.shared.viewmodel.BuildStage
 import com.kareemessam.openship.shared.viewmodel.DeployLogsUiState
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,81 +81,99 @@ fun DeployLogsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(
-                            text = state.projectName.ifBlank { "Deployment Logs" },
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 17.sp,
-                            color = colors.textHeading,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Text(
-                            text = state.deploymentId.ifBlank { "Live Stream" },
-                            fontSize = 11.sp,
-                            fontFamily = FontFamily.Monospace,
-                            color = colors.textMuted
-                        )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = colors.textHeading
-                        )
-                    }
-                },
-                actions = {
-                    // Auto-Scroll Toggle Button
-                    IconButton(
-                        onClick = { onAutoScrollChanged(!state.autoScroll) }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(colors.bgPage)
+                    .statusBarsPadding()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.weight(1f)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.VerticalAlignBottom,
-                            contentDescription = "Auto Scroll",
-                            tint = if (state.autoScroll) colors.statusActive else colors.textMuted
-                        )
-                    }
-
-                    // Status Badge
-                    val statusKind = when (state.finalStatus?.lowercase()) {
-                        "ready", "active", "success" -> StatusKind.SUCCESS
-                        "failed", "error" -> StatusKind.DANGER
-                        "cancelled" -> StatusKind.NEUTRAL
-                        else -> if (state.isStreaming) StatusKind.WARNING else StatusKind.INFO
-                    }
-                    val statusText = when {
-                        state.finalStatus != null -> state.finalStatus.replaceFirstChar { it.uppercase() }
-                        state.isStreaming -> "Live"
-                        else -> "Connected"
-                    }
-                    StatusBadge(
-                        text = statusText,
-                        kind = statusKind,
-                        pulseDot = state.isStreaming
-                    )
-
-                    // Theme Toggle (Light / Dark)
-                    IconButton(
-                        onClick = {
-                            themeModeState.value = if (colors.isDark) ThemeMode.LIGHT else ThemeMode.DARK
+                        IconButton(
+                            onClick = onBack,
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = colors.textHeading,
+                                modifier = Modifier.size(18.dp)
+                            )
                         }
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = state.projectName.ifBlank { "Deployment Logs" },
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 15.sp,
+                                color = colors.textHeading,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = state.deploymentId.ifBlank { "Live Stream" },
+                                fontSize = 11.sp,
+                                fontFamily = FontFamily.Monospace,
+                                color = colors.textMuted
+                            )
+                        }
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Icon(
-                            imageVector = if (colors.isDark) Icons.Default.LightMode else Icons.Default.DarkMode,
-                            contentDescription = "Toggle Theme",
-                            tint = colors.textSecondary
+                        // Auto-Scroll Toggle Button
+                        IconButton(
+                            onClick = { onAutoScrollChanged(!state.autoScroll) },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.VerticalAlignBottom,
+                                contentDescription = "Auto Scroll",
+                                tint = if (state.autoScroll) colors.statusActive else colors.textMuted,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+
+                        // Status Badge
+                        val statusKind = when (state.finalStatus?.lowercase()) {
+                            "ready", "active", "success" -> StatusKind.SUCCESS
+                            "failed", "error" -> StatusKind.DANGER
+                            "cancelled" -> StatusKind.NEUTRAL
+                            else -> if (state.isStreaming) StatusKind.WARNING else StatusKind.INFO
+                        }
+                        val statusText = when {
+                            state.finalStatus != null -> state.finalStatus.replaceFirstChar { it.uppercase() }
+                            state.isStreaming -> "Live"
+                            else -> "Connected"
+                        }
+                        StatusBadge(
+                            text = statusText,
+                            kind = statusKind,
+                            pulseDot = state.isStreaming,
+                            compact = true
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = colors.bgPage
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(colors.borderSubtle)
                 )
-            )
+            }
         },
         containerColor = colors.bgPage,
         modifier = modifier
@@ -163,8 +182,8 @@ fun DeployLogsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             // Build Stage Stepper Header
             BuildStageStepper(
@@ -182,14 +201,14 @@ fun DeployLogsScreen(
                     value = state.searchQuery,
                     onValueChange = onSearchChanged,
                     placeholder = {
-                        Text("Search terminal logs...", fontSize = 12.sp, color = colors.textMuted)
+                        Text("Filter logs...", fontSize = 12.sp, color = colors.textMuted)
                     },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = "Search",
                             tint = colors.textMuted,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(14.dp)
                         )
                     },
                     trailingIcon = {
@@ -205,10 +224,10 @@ fun DeployLogsScreen(
                         }
                     },
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(10.dp),
+                    shape = RoundedCornerShape(8.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = colors.bgCard,
-                        unfocusedContainerColor = colors.bgCard,
+                        focusedContainerColor = colors.inputBg,
+                        unfocusedContainerColor = colors.inputBg,
                         focusedBorderColor = colors.borderFocus,
                         unfocusedBorderColor = colors.borderInput,
                         focusedTextColor = colors.textHeading,
@@ -221,7 +240,7 @@ fun DeployLogsScreen(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
-                        .background(colors.bgPill)
+                        .background(colors.bgSubtle)
                         .border(1.dp, colors.borderSubtle, RoundedCornerShape(8.dp))
                         .padding(horizontal = 10.dp, vertical = 8.dp)
                 ) {
@@ -234,29 +253,29 @@ fun DeployLogsScreen(
                 }
             }
 
-            // Developer Terminal Window (with Mac Titlebar)
+            // Developer Terminal Window
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(RoundedCornerShape(12.dp))
                     .background(colors.bgTerminal)
-                    .border(1.dp, colors.borderCard, RoundedCornerShape(14.dp))
+                    .border(1.dp, colors.borderCard, RoundedCornerShape(12.dp))
             ) {
-                // Mac Titlebar Header
+                // Titlebar Header
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(if (colors.isDark) Color(0xFF0F0F0F) else Color(0xFF1F2937))
+                        .background(if (colors.isDark) Color(0xFF0C0C0C) else Color(0xFF18181B))
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    MacWindowDots()
+                    TerminalWindowDots()
 
                     Text(
-                        text = "terminal · container logs",
-                        fontSize = 11.sp,
+                        text = "terminal · build output",
+                        fontSize = 10.sp,
                         fontFamily = FontFamily.Monospace,
                         color = Color(0xFF9CA3AF)
                     )
@@ -282,12 +301,12 @@ fun DeployLogsScreen(
                                     imageVector = Icons.Default.Terminal,
                                     contentDescription = "Terminal",
                                     tint = colors.textMuted,
-                                    modifier = Modifier.size(36.dp)
+                                    modifier = Modifier.size(32.dp)
                                 )
                                 Text(
                                     text = if (state.error != null) "Log Stream Offline" else "Waiting for container stream...",
                                     color = Color(0xFF9CA3AF),
-                                    fontSize = 13.sp,
+                                    fontSize = 12.sp,
                                     fontFamily = FontFamily.Monospace
                                 )
                                 if (state.error != null) {
@@ -304,7 +323,7 @@ fun DeployLogsScreen(
                                         ),
                                         shape = RoundedCornerShape(6.dp)
                                     ) {
-                                        Text("Reconnect", fontSize = 12.sp)
+                                        Text("Reconnect", fontSize = 11.sp)
                                     }
                                 }
                             }
@@ -314,8 +333,8 @@ fun DeployLogsScreen(
                             state = listState,
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                                .padding(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(3.dp)
                         ) {
                             itemsIndexed(
                                 items = displayedLogs,
@@ -363,14 +382,14 @@ fun DeployLogsScreen(
                             shape = CircleShape,
                             modifier = Modifier
                                 .align(Alignment.BottomEnd)
-                                .padding(16.dp)
-                                .size(38.dp)
+                                .padding(14.dp)
+                                .size(36.dp)
                                 .border(1.dp, colors.borderSubtle, CircleShape)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.KeyboardArrowDown,
                                 contentDescription = "Scroll to bottom",
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(18.dp)
                             )
                         }
                     }
@@ -398,9 +417,9 @@ private fun BuildStageStepper(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(8.dp))
             .background(colors.bgCard)
-            .border(1.dp, colors.borderCard, RoundedCornerShape(10.dp))
+            .border(1.dp, colors.borderCard, RoundedCornerShape(8.dp))
             .padding(horizontal = 12.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -415,7 +434,7 @@ private fun BuildStageStepper(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(8.dp)
+                        .size(7.dp)
                         .clip(CircleShape)
                         .background(
                             when {
@@ -446,3 +465,4 @@ private fun BuildStageStepper(
         }
     }
 }
+

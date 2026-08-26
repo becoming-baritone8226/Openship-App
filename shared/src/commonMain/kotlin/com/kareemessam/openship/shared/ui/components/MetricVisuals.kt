@@ -34,7 +34,7 @@ fun CircularMetricGauge(
     val colors = OpenshipAppTheme.colors
     val animatedPercent by animateFloatAsState(
         targetValue = percentage.coerceIn(0f, 100f),
-        animationSpec = tween(durationMillis = 800)
+        animationSpec = tween(durationMillis = 600)
     )
 
     val gaugeColor = when {
@@ -45,15 +45,15 @@ fun CircularMetricGauge(
 
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(14.dp))
             .background(colors.bgCard)
-            .border(1.dp, colors.borderCard, RoundedCornerShape(16.dp))
-            .padding(16.dp),
+            .border(1.dp, colors.borderCard, RoundedCornerShape(14.dp))
+            .padding(14.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
                 text = label.uppercase(),
@@ -65,17 +65,17 @@ fun CircularMetricGauge(
 
             // Circular Gauge Canvas
             Box(
-                modifier = Modifier.size(100.dp),
+                modifier = Modifier.size(86.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
-                    val strokeWidth = 8.dp.toPx()
+                    val strokeWidth = 7.dp.toPx()
                     val diameter = size.minDimension - strokeWidth
                     val topLeft = Offset((size.width - diameter) / 2, (size.height - diameter) / 2)
 
                     // Track Background Arc (240 degrees)
                     drawArc(
-                        color = if (colors.isDark) Color(0x1FFFFFFF) else Color(0x14000000),
+                        color = if (colors.isDark) Color(0x14FFFFFF) else Color(0x10000000),
                         startAngle = 150f,
                         sweepAngle = 240f,
                         useCenter = false,
@@ -86,15 +86,17 @@ fun CircularMetricGauge(
 
                     // Active Progress Arc
                     val sweep = (animatedPercent / 100f) * 240f
-                    drawArc(
-                        color = gaugeColor,
-                        startAngle = 150f,
-                        sweepAngle = sweep,
-                        useCenter = false,
-                        topLeft = topLeft,
-                        size = Size(diameter, diameter),
-                        style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-                    )
+                    if (sweep > 0f) {
+                        drawArc(
+                            color = gaugeColor,
+                            startAngle = 150f,
+                            sweepAngle = sweep,
+                            useCenter = false,
+                            topLeft = topLeft,
+                            size = Size(diameter, diameter),
+                            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                        )
+                    }
                 }
 
                 Column(
@@ -102,7 +104,7 @@ fun CircularMetricGauge(
                 ) {
                     Text(
                         text = "${animatedPercent.toInt()}%",
-                        fontSize = 20.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = colors.textHeading,
                         fontFamily = FontFamily.Monospace
@@ -112,9 +114,10 @@ fun CircularMetricGauge(
 
             Text(
                 text = valueSubtext,
-                fontSize = 11.sp,
+                fontSize = 10.sp,
                 color = colors.textSecondary,
-                fontFamily = FontFamily.Monospace
+                fontFamily = FontFamily.Monospace,
+                maxLines = 1
             )
         }
     }
@@ -133,9 +136,9 @@ fun SparklineTrendCard(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(14.dp))
             .background(colors.bgCard)
-            .border(1.dp, colors.borderCard, RoundedCornerShape(16.dp))
+            .border(1.dp, colors.borderCard, RoundedCornerShape(14.dp))
             .padding(16.dp)
     ) {
         Column(
@@ -151,12 +154,12 @@ fun SparklineTrendCard(
                     Text(
                         text = title,
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Medium,
                         color = colors.textMuted
                     )
                     Text(
                         text = currentValue,
-                        fontSize = 18.sp,
+                        fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
                         color = colors.textHeading,
                         fontFamily = FontFamily.Monospace
@@ -165,17 +168,22 @@ fun SparklineTrendCard(
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(colors.bgSubtle)
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(6.dp)
+                            .size(5.dp)
                             .clip(CircleShape)
                             .background(lineColor)
                     )
                     Text(
-                        text = "Live (3s)",
-                        fontSize = 11.sp,
+                        text = "Live",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium,
                         color = colors.textMuted
                     )
                 }
@@ -185,7 +193,7 @@ fun SparklineTrendCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(60.dp)
+                    .height(54.dp)
             ) {
                 if (history.size >= 2) {
                     Canvas(modifier = Modifier.fillMaxSize()) {
@@ -202,7 +210,7 @@ fun SparklineTrendCard(
                         history.forEachIndexed { index, value ->
                             val x = index * stepX
                             val normalized = (value - minVal) / (maxVal - minVal)
-                            val y = height - (normalized * height).coerceIn(0f, height)
+                            val y = height - (normalized * (height - 8.dp.toPx())) - 4.dp.toPx()
 
                             if (index == 0) {
                                 path.moveTo(x, y)
@@ -221,7 +229,7 @@ fun SparklineTrendCard(
                         drawPath(
                             path = fillPath,
                             brush = Brush.verticalGradient(
-                                listOf(lineColor.copy(alpha = 0.25f), lineColor.copy(alpha = 0.0f))
+                                listOf(lineColor.copy(alpha = 0.22f), lineColor.copy(alpha = 0.0f))
                             )
                         )
 
@@ -229,7 +237,7 @@ fun SparklineTrendCard(
                         drawPath(
                             path = path,
                             color = lineColor,
-                            style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+                            style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
                         )
                     }
                 } else {
@@ -238,7 +246,7 @@ fun SparklineTrendCard(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Collecting telemetry samples...",
+                            text = "Awaiting telemetry samples...",
                             fontSize = 11.sp,
                             color = colors.textMuted,
                             fontFamily = FontFamily.Monospace
@@ -249,3 +257,4 @@ fun SparklineTrendCard(
         }
     }
 }
+

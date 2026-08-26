@@ -6,10 +6,11 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
 
-enum class ThemeMode {
-    SYSTEM,
-    DARK,
-    LIGHT
+enum class ThemeMode(val label: String) {
+    DARK("Dark"),
+    DIM("Dim"),
+    LIGHT("Light"),
+    SYSTEM("System")
 }
 
 val LocalThemeMode = staticCompositionLocalOf<MutableState<ThemeMode>> {
@@ -39,6 +40,31 @@ private val OpenshipDarkColorScheme = darkColorScheme(
     onError = OpenshipColors.Dark.ButtonPrimaryText,
     errorContainer = OpenshipColors.Dark.StatusDangerBg,
     onErrorContainer = OpenshipColors.Dark.StatusDangerFg
+)
+
+private val OpenshipDimColorScheme = darkColorScheme(
+    background = OpenshipColors.Dim.BgPage,
+    surface = OpenshipColors.Dim.BgPage,
+    surfaceVariant = OpenshipColors.Dim.BgCard,
+    surfaceContainer = OpenshipColors.Dim.BgCard,
+    surfaceContainerHigh = OpenshipColors.Dim.BgCardElevated,
+    onBackground = OpenshipColors.Dim.TextTitle,
+    onSurface = OpenshipColors.Dim.TextTitle,
+    onSurfaceVariant = OpenshipColors.Dim.TextBody,
+    outline = OpenshipColors.Dim.BorderDefault,
+    outlineVariant = OpenshipColors.Dim.BorderSubtle,
+    primary = OpenshipColors.Dim.ButtonPrimaryBg,
+    onPrimary = OpenshipColors.Dim.ButtonPrimaryText,
+    primaryContainer = OpenshipColors.Dim.BgCardElevated,
+    onPrimaryContainer = OpenshipColors.Dim.TextHeading,
+    secondary = OpenshipColors.Dim.StatusInfoSolid,
+    onSecondary = OpenshipColors.Dim.ButtonPrimaryBg,
+    secondaryContainer = OpenshipColors.Dim.BgCardElevated,
+    onSecondaryContainer = OpenshipColors.Dim.TextTitle,
+    error = OpenshipColors.Dim.StatusDangerFg,
+    onError = OpenshipColors.Dim.ButtonPrimaryText,
+    errorContainer = OpenshipColors.Dim.StatusDangerBg,
+    onErrorContainer = OpenshipColors.Dim.StatusDangerFg
 )
 
 private val OpenshipLightColorScheme = lightColorScheme(
@@ -72,14 +98,26 @@ fun OpenshipTheme(
     content: @Composable () -> Unit
 ) {
     val isSystemDark = isSystemInDarkTheme()
-    val isDark = when (themeModeState.value) {
-        ThemeMode.DARK -> true
-        ThemeMode.LIGHT -> false
-        ThemeMode.SYSTEM -> isSystemDark
+    val activeMode = when (themeModeState.value) {
+        ThemeMode.DARK -> ThemeMode.DARK
+        ThemeMode.DIM -> ThemeMode.DIM
+        ThemeMode.LIGHT -> ThemeMode.LIGHT
+        ThemeMode.SYSTEM -> if (isSystemDark) ThemeMode.DARK else ThemeMode.LIGHT
     }
 
-    val customColors = if (isDark) OpenshipCustomColors() else lightOpenshipColors()
-    val colorScheme = if (isDark) OpenshipDarkColorScheme else OpenshipLightColorScheme
+    val customColors = when (activeMode) {
+        ThemeMode.DARK -> darkOpenshipColors()
+        ThemeMode.DIM -> dimOpenshipColors()
+        ThemeMode.LIGHT, ThemeMode.SYSTEM -> lightOpenshipColors()
+    }
+
+    val colorScheme = when (activeMode) {
+        ThemeMode.DARK -> OpenshipDarkColorScheme
+        ThemeMode.DIM -> OpenshipDimColorScheme
+        ThemeMode.LIGHT, ThemeMode.SYSTEM -> OpenshipLightColorScheme
+    }
+
+    PlatformSystemBars(isDark = customColors.isDark)
 
     CompositionLocalProvider(
         LocalOpenshipColors provides customColors,
@@ -98,3 +136,4 @@ object OpenshipAppTheme {
         @ReadOnlyComposable
         get() = LocalOpenshipColors.current
 }
+

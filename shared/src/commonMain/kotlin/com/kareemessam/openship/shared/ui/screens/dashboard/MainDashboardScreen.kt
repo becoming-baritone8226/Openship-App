@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
@@ -51,51 +52,71 @@ fun MainDashboardScreen(
     val colors = OpenshipAppTheme.colors
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
-            NavigationBar(
-                containerColor = colors.bgCard,
-                tonalElevation = 0.dp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(1.dp, colors.borderCard, RoundedCornerShape(0.dp))
-            ) {
-                NavigationBarItem(
-                    selected = selectedTab == DashboardTab.PROJECTS,
-                    onClick = { selectedTab = DashboardTab.PROJECTS },
-                    icon = {
-                        Icon(
-                            imageVector = if (selectedTab == DashboardTab.PROJECTS) Icons.Filled.GridView else Icons.Outlined.GridView,
-                            contentDescription = "Projects"
-                        )
-                    },
-                    label = { Text("Projects", fontSize = 11.sp, fontWeight = if (selectedTab == DashboardTab.PROJECTS) FontWeight.Bold else FontWeight.Normal) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = colors.btnPrimaryText,
-                        selectedTextColor = colors.textHeading,
-                        indicatorColor = colors.btnPrimaryBg,
-                        unselectedIconColor = colors.textMuted,
-                        unselectedTextColor = colors.textMuted
-                    )
+            Column(modifier = Modifier.fillMaxWidth().background(colors.bgPage)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(colors.borderSubtle)
                 )
+                NavigationBar(
+                    containerColor = colors.bgPage,
+                    tonalElevation = 0.dp,
+                    windowInsets = NavigationBarDefaults.windowInsets,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    NavigationBarItem(
+                        selected = selectedTab == DashboardTab.PROJECTS,
+                        onClick = { selectedTab = DashboardTab.PROJECTS },
+                        icon = {
+                            Icon(
+                                imageVector = if (selectedTab == DashboardTab.PROJECTS) Icons.Filled.GridView else Icons.Outlined.GridView,
+                                contentDescription = "Projects"
+                            )
+                        },
+                        label = {
+                            Text(
+                                "Projects",
+                                fontSize = 11.sp,
+                                fontWeight = if (selectedTab == DashboardTab.PROJECTS) FontWeight.SemiBold else FontWeight.Normal
+                            )
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = colors.textHeading,
+                            selectedTextColor = colors.textHeading,
+                            indicatorColor = colors.bgCard,
+                            unselectedIconColor = colors.textMuted,
+                            unselectedTextColor = colors.textMuted
+                        )
+                    )
 
-                NavigationBarItem(
-                    selected = selectedTab == DashboardTab.MONITOR,
-                    onClick = { selectedTab = DashboardTab.MONITOR },
-                    icon = {
-                        Icon(
-                            imageVector = if (selectedTab == DashboardTab.MONITOR) Icons.AutoMirrored.Filled.ShowChart else Icons.AutoMirrored.Outlined.ShowChart,
-                            contentDescription = "Monitoring"
+                    NavigationBarItem(
+                        selected = selectedTab == DashboardTab.MONITOR,
+                        onClick = { selectedTab = DashboardTab.MONITOR },
+                        icon = {
+                            Icon(
+                                imageVector = if (selectedTab == DashboardTab.MONITOR) Icons.AutoMirrored.Filled.ShowChart else Icons.AutoMirrored.Outlined.ShowChart,
+                                contentDescription = "Monitoring"
+                            )
+                        },
+                        label = {
+                            Text(
+                                "Monitoring",
+                                fontSize = 11.sp,
+                                fontWeight = if (selectedTab == DashboardTab.MONITOR) FontWeight.SemiBold else FontWeight.Normal
+                            )
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = colors.textHeading,
+                            selectedTextColor = colors.textHeading,
+                            indicatorColor = colors.bgCard,
+                            unselectedIconColor = colors.textMuted,
+                            unselectedTextColor = colors.textMuted
                         )
-                    },
-                    label = { Text("Monitoring", fontSize = 11.sp, fontWeight = if (selectedTab == DashboardTab.MONITOR) FontWeight.Bold else FontWeight.Normal) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = colors.btnPrimaryText,
-                        selectedTextColor = colors.textHeading,
-                        indicatorColor = colors.btnPrimaryBg,
-                        unselectedIconColor = colors.textMuted,
-                        unselectedTextColor = colors.textMuted
                     )
-                )
+                }
             }
         },
         containerColor = colors.bgPage,

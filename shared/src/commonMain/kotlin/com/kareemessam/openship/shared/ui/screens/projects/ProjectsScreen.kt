@@ -5,6 +5,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -17,16 +20,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kareemessam.openship.shared.model.ProjectStatus
 import com.kareemessam.openship.shared.model.ProjectSummary
+import com.kareemessam.openship.shared.ui.components.InstanceSwitcherModal
 import com.kareemessam.openship.shared.ui.components.OpenshipTopBar
 import com.kareemessam.openship.shared.ui.components.ProjectCard
 import com.kareemessam.openship.shared.ui.theme.OpenshipAppTheme
 import com.kareemessam.openship.shared.viewmodel.ProjectsUiState
-
-import com.kareemessam.openship.shared.ui.components.InstanceSwitcherModal
 
 enum class ProjectFilterTab {
     ALL,
@@ -54,6 +57,11 @@ fun ProjectsScreen(
     val colors = OpenshipAppTheme.colors
     var selectedFilter by remember { mutableStateOf(ProjectFilterTab.ALL) }
     var isInstanceModalOpen by remember { mutableStateOf(false) }
+
+    val activeCount = remember(state.projects) { state.projects.count { it.status == ProjectStatus.READY } }
+    val buildingCount = remember(state.projects) {
+        state.projects.count { it.status == ProjectStatus.BUILDING || it.status == ProjectStatus.QUEUED }
+    }
 
     // Navigate to the live logs once a redeploy returns a deployment id.
     LaunchedEffect(state.redeployResultDeploymentId) {
@@ -102,13 +110,12 @@ fun ProjectsScreen(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            Column(modifier = Modifier.background(colors.bgPage)) {
-                OpenshipTopBar(
-                    instanceLabel = state.activeInstance?.label,
-                    onSwitchInstance = { isInstanceModalOpen = true }
-                )
-            }
+            OpenshipTopBar(
+                instanceLabel = state.activeInstance?.label,
+                onSwitchInstance = { isInstanceModalOpen = true }
+            )
         },
         containerColor = colors.bgPage,
         modifier = modifier
@@ -120,210 +127,245 @@ fun ProjectsScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            Column(
+            BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 20.dp)
             ) {
-                // Section Header
-                Column {
-                    Text(
-                        text = "Projects",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 22.sp,
-                        color = colors.textHeading,
-                        letterSpacing = (-0.4).sp
-                    )
-                    Text(
-                        text = "${state.projects.size} deployed service${if (state.projects.size == 1) "" else "s"}",
-                        fontSize = 12.sp,
-                        color = colors.textMuted
-                    )
-                }
+                val isWide = maxWidth >= 600.dp
 
-                // Segmented Filter Control (matching Openship screenshot: Frontend | Backend | Fullstack)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(999.dp))
-                        .background(colors.bgPill)
-                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(999.dp))
-                        .padding(4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    SegmentedFilterTab(
-                        label = "All (${state.projects.size})",
-                        isSelected = selectedFilter == ProjectFilterTab.ALL,
-                        onClick = { selectedFilter = ProjectFilterTab.ALL },
-                        modifier = Modifier.weight(1f)
-                    )
-                    SegmentedFilterTab(
-                        label = "Active",
-                        isSelected = selectedFilter == ProjectFilterTab.ACTIVE,
-                        onClick = { selectedFilter = ProjectFilterTab.ACTIVE },
-                        modifier = Modifier.weight(1f)
-                    )
-                    SegmentedFilterTab(
-                        label = "Building",
-                        isSelected = selectedFilter == ProjectFilterTab.BUILDING,
-                        onClick = { selectedFilter = ProjectFilterTab.BUILDING },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                // Search Bar Field
-                OutlinedTextField(
-                    value = state.searchQuery,
-                    onValueChange = onSearchChanged,
-                    placeholder = {
+                    // Header Title
+                    Column {
                         Text(
-                            "Search projects by name, repo, or framework...",
-                            color = colors.textMuted,
-                            fontSize = 13.sp
+                            text = "Projects",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            color = colors.textHeading,
+                            letterSpacing = (-0.3).sp
                         )
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Search",
-                            tint = colors.textMuted,
-                            modifier = Modifier.size(18.dp)
+                        Text(
+                            text = "${state.projects.size} deployed service${if (state.projects.size == 1) "" else "s"}",
+                            fontSize = 12.sp,
+                            color = colors.textMuted
                         )
-                    },
-                    trailingIcon = {
-                        if (state.searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { onSearchChanged("") }) {
-                                Icon(
-                                    imageVector = Icons.Default.Clear,
-                                    contentDescription = "Clear",
-                                    tint = colors.textMuted,
-                                    modifier = Modifier.size(16.dp)
+                    }
+
+                    // Full-width Segmented Filter Tabs
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(999.dp))
+                            .background(colors.bgSubtle)
+                            .border(1.dp, colors.borderSubtle, RoundedCornerShape(999.dp))
+                            .padding(3.dp),
+                        horizontalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        SegmentedFilterTab(
+                            label = "All (${state.projects.size})",
+                            isSelected = selectedFilter == ProjectFilterTab.ALL,
+                            onClick = { selectedFilter = ProjectFilterTab.ALL },
+                            modifier = Modifier.weight(1f)
+                        )
+                        SegmentedFilterTab(
+                            label = "Active ($activeCount)",
+                            isSelected = selectedFilter == ProjectFilterTab.ACTIVE,
+                            onClick = { selectedFilter = ProjectFilterTab.ACTIVE },
+                            modifier = Modifier.weight(1f)
+                        )
+                        SegmentedFilterTab(
+                            label = "Building ($buildingCount)",
+                            isSelected = selectedFilter == ProjectFilterTab.BUILDING,
+                            onClick = { selectedFilter = ProjectFilterTab.BUILDING },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    // Search Bar
+                    OutlinedTextField(
+                        value = state.searchQuery,
+                        onValueChange = onSearchChanged,
+                        placeholder = {
+                            Text(
+                                "Search projects by name, repo, or framework...",
+                                color = colors.textMuted,
+                                fontSize = 12.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Search",
+                                tint = colors.textMuted,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        },
+                        trailingIcon = {
+                            if (state.searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { onSearchChanged("") }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Clear,
+                                        contentDescription = "Clear",
+                                        tint = colors.textMuted,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = colors.inputBg,
+                            unfocusedContainerColor = colors.inputBg,
+                            focusedBorderColor = colors.borderFocus,
+                            unfocusedBorderColor = colors.borderInput,
+                            focusedTextColor = colors.textHeading,
+                            unfocusedTextColor = colors.textPrimary
+                        ),
+                        singleLine = true
+                    )
+
+                    // Content Area
+                    when {
+                        state.isLoading -> {
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    color = colors.btnPrimaryBg,
+                                    modifier = Modifier.size(32.dp)
                                 )
                             }
                         }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = colors.bgCard,
-                        unfocusedContainerColor = colors.bgCard,
-                        focusedBorderColor = colors.borderFocus,
-                        unfocusedBorderColor = colors.borderInput,
-                        focusedTextColor = colors.textHeading,
-                        unfocusedTextColor = colors.textPrimary
-                    ),
-                    singleLine = true
-                )
-
-                // Projects List Content
-                when {
-                    state.isLoading -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(
-                                color = colors.btnPrimaryBg,
-                                modifier = Modifier.size(36.dp)
-                            )
-                        }
-                    }
-                    state.error != null -> {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(colors.bgCard)
-                                .border(1.dp, colors.statusFailedBorder, RoundedCornerShape(16.dp))
-                                .padding(24.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                        state.error != null -> {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(colors.bgCard)
+                                    .border(1.dp, colors.statusFailedBorder, RoundedCornerShape(14.dp))
+                                    .padding(20.dp),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.ErrorOutline,
-                                    contentDescription = "Error",
-                                    tint = colors.statusFailed,
-                                    modifier = Modifier.size(36.dp)
-                                )
-                                Text(
-                                    text = "Connection Failed",
-                                    fontWeight = FontWeight.Bold,
-                                    color = colors.textHeading,
-                                    fontSize = 16.sp
-                                )
-                                Text(
-                                    text = state.error,
-                                    color = colors.textSecondary,
-                                    fontSize = 13.sp
-                                )
-                                Button(
-                                    onClick = onRefresh,
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = colors.btnPrimaryBg,
-                                        contentColor = colors.btnPrimaryText
-                                    ),
-                                    shape = RoundedCornerShape(8.dp)
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
-                                    Text("Retry Connection")
+                                    Icon(
+                                        imageVector = Icons.Default.ErrorOutline,
+                                        contentDescription = "Error",
+                                        tint = colors.statusFailed,
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                    Text(
+                                        text = "Connection Failed",
+                                        fontWeight = FontWeight.Bold,
+                                        color = colors.textHeading,
+                                        fontSize = 15.sp
+                                    )
+                                    Text(
+                                        text = state.error,
+                                        color = colors.textSecondary,
+                                        fontSize = 12.sp
+                                    )
+                                    Button(
+                                        onClick = onRefresh,
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = colors.btnPrimaryBg,
+                                            contentColor = colors.btnPrimaryText
+                                        ),
+                                        shape = RoundedCornerShape(8.dp),
+                                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                                    ) {
+                                        Text("Retry Connection", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                    }
                                 }
                             }
                         }
-                    }
-                    displayedProjects.isEmpty() -> {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(colors.bgCard)
-                                .border(1.dp, colors.borderCard, RoundedCornerShape(16.dp))
-                                .padding(32.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                        displayedProjects.isEmpty() -> {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(colors.bgCard)
+                                    .border(1.dp, colors.borderCard, RoundedCornerShape(14.dp))
+                                    .padding(28.dp),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Layers,
-                                    contentDescription = "No Projects",
-                                    tint = colors.textMuted,
-                                    modifier = Modifier.size(40.dp)
-                                )
-                                Text(
-                                    text = if (state.searchQuery.isNotBlank()) "No matching projects" else "No projects deployed",
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = colors.textHeading,
-                                    fontSize = 15.sp
-                                )
-                                Text(
-                                    text = if (state.searchQuery.isNotBlank()) "Try another search filter." else "Projects deployed on this Openship server will appear here.",
-                                    color = colors.textMuted,
-                                    fontSize = 12.sp
-                                )
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Layers,
+                                        contentDescription = "No Projects",
+                                        tint = colors.textGhost,
+                                        modifier = Modifier.size(36.dp)
+                                    )
+                                    Text(
+                                        text = if (state.searchQuery.isNotBlank()) "No matching projects" else "No projects deployed",
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = colors.textHeading,
+                                        fontSize = 14.sp
+                                    )
+                                    Text(
+                                        text = if (state.searchQuery.isNotBlank()) "Try refining your search filter." else "Projects deployed on this Openship server will appear here.",
+                                        color = colors.textMuted,
+                                        fontSize = 12.sp
+                                    )
+                                }
                             }
                         }
-                    }
-                    else -> {
-                        LazyColumn(
-                            verticalArrangement = Arrangement.spacedBy(14.dp),
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(bottom = 24.dp)
-                        ) {
-                            items(
-                                items = displayedProjects,
-                                key = { it.id }
-                            ) { project ->
-                                ProjectCard(
-                                    project = project,
-                                    onClick = { onProjectClicked(project) },
-                                    mcpRedeployAvailable = state.redeployAvailable,
-                                    onRedeployClick = { onRedeployClick(project) },
-                                    onHistoryClick = { onHistoryClick(project) }
-                                )
+                        isWide -> {
+                            // 2-Column Responsive Grid for Tablets / Landscape
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                modifier = Modifier.weight(1f).fillMaxWidth(),
+                                contentPadding = PaddingValues(bottom = 16.dp)
+                            ) {
+                                items(
+                                    items = displayedProjects,
+                                    key = { it.id }
+                                ) { project ->
+                                    ProjectCard(
+                                        project = project,
+                                        onClick = { onProjectClicked(project) },
+                                        mcpRedeployAvailable = state.redeployAvailable,
+                                        onRedeployClick = { onRedeployClick(project) },
+                                        onHistoryClick = { onHistoryClick(project) }
+                                    )
+                                }
+                            }
+                        }
+                        else -> {
+                            // Single Column for Standard Mobile
+                            LazyColumn(
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                modifier = Modifier.weight(1f).fillMaxWidth(),
+                                contentPadding = PaddingValues(bottom = 16.dp)
+                            ) {
+                                items(
+                                    items = displayedProjects,
+                                    key = { it.id }
+                                ) { project ->
+                                    ProjectCard(
+                                        project = project,
+                                        onClick = { onProjectClicked(project) },
+                                        mcpRedeployAvailable = state.redeployAvailable,
+                                        onRedeployClick = { onRedeployClick(project) },
+                                        onHistoryClick = { onHistoryClick(project) }
+                                    )
+                                }
                             }
                         }
                     }
@@ -345,43 +387,52 @@ private fun RedeployConfirmDialog(
     AlertDialog(
         onDismissRequest = onCancel,
         title = {
-            Text("Redeploy project?", fontWeight = FontWeight.Bold, color = colors.textHeading)
+            Text("Redeploy project?", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = colors.textHeading)
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     text = "\"$projectName\" will be redeployed from its current source.",
-                    fontSize = 14.sp,
+                    fontSize = 13.sp,
                     color = colors.textSecondary
                 )
                 if (error != null) {
                     Text(
                         text = error,
-                        fontSize = 13.sp,
+                        fontSize = 12.sp,
                         color = colors.statusFailed
                     )
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = onConfirm, enabled = !isLoading) {
+            Button(
+                onClick = onConfirm,
+                enabled = !isLoading,
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.btnPrimaryBg,
+                    contentColor = colors.btnPrimaryText
+                )
+            ) {
                 if (isLoading) {
                     CircularProgressIndicator(
-                        color = colors.btnPrimaryBg,
+                        color = colors.btnPrimaryText,
                         strokeWidth = 2.dp,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(16.dp)
                     )
                 } else {
-                    Text("Redeploy")
+                    Text("Redeploy", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onCancel, enabled = !isLoading) {
-                Text("Cancel")
+                Text("Cancel", fontSize = 12.sp, color = colors.textSecondary)
             }
         },
-        containerColor = colors.bgCard
+        containerColor = colors.bgCard,
+        shape = RoundedCornerShape(16.dp)
     )
 }
 
@@ -404,14 +455,15 @@ private fun SegmentedFilterTab(
                 RoundedCornerShape(999.dp)
             )
             .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
+            .padding(horizontal = 10.dp, vertical = 5.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = label,
-            fontSize = 12.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            fontSize = 11.sp,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
             color = if (isSelected) colors.textHeading else colors.textMuted
         )
     }
 }
+

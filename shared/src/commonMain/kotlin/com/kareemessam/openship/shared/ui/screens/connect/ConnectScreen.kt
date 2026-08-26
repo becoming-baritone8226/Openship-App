@@ -6,7 +6,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -22,7 +21,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kareemessam.openship.shared.ui.components.MacWindowDots
 import com.kareemessam.openship.shared.ui.components.OpenshipBrandLogo
 import com.kareemessam.openship.shared.ui.components.StatusBadge
 import com.kareemessam.openship.shared.ui.components.StatusKind
@@ -55,25 +53,55 @@ fun ConnectScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { OpenshipBrandLogo() },
-                actions = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(colors.bgPage)
+                    .statusBarsPadding()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 18.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OpenshipBrandLogo()
+
                     IconButton(
                         onClick = {
-                            themeModeState.value = if (colors.isDark) ThemeMode.LIGHT else ThemeMode.DARK
-                        }
+                            themeModeState.value = when (themeModeState.value) {
+                                ThemeMode.DARK -> ThemeMode.DIM
+                                ThemeMode.DIM -> ThemeMode.LIGHT
+                                ThemeMode.LIGHT, ThemeMode.SYSTEM -> ThemeMode.DARK
+                            }
+                        },
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(colors.bgSubtle)
                     ) {
+                        val icon = when (themeModeState.value) {
+                            ThemeMode.DARK -> Icons.Default.DarkMode
+                            ThemeMode.DIM -> Icons.Default.NightlightRound
+                            ThemeMode.LIGHT -> Icons.Default.LightMode
+                            ThemeMode.SYSTEM -> if (colors.isDark) Icons.Default.DarkMode else Icons.Default.LightMode
+                        }
                         Icon(
-                            imageVector = if (colors.isDark) Icons.Default.LightMode else Icons.Default.DarkMode,
+                            imageVector = icon,
                             contentDescription = "Toggle Theme",
-                            tint = colors.textSecondary
+                            tint = colors.textSecondary,
+                            modifier = Modifier.size(16.dp)
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = colors.bgPage
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(colors.borderSubtle)
                 )
-            )
+            }
         },
         containerColor = colors.bgPage,
         modifier = modifier
@@ -85,31 +113,29 @@ fun ConnectScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(18.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Hero Card
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(14.dp))
                     .background(colors.bgCard)
-                    .border(1.dp, colors.borderCard, RoundedCornerShape(16.dp))
-                    .padding(20.dp)
+                    .border(1.dp, colors.borderCard, RoundedCornerShape(14.dp))
+                    .padding(18.dp)
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    MacWindowDots()
-                    Spacer(modifier = Modifier.height(4.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
                         text = "Connect Server",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
+                        fontSize = 17.sp,
                         color = colors.textHeading
                     )
                     Text(
-                        text = "Connect to your self-hosted Openship instance to monitor deployments and servers in real time.",
-                        fontSize = 13.sp,
-                        color = colors.textBody,
-                        lineHeight = 18.sp
+                        text = "Connect to your self-hosted Openship instance to manage deployments and monitor server telemetry.",
+                        fontSize = 12.sp,
+                        color = colors.textSecondary,
+                        lineHeight = 17.sp
                     )
                 }
             }
@@ -118,36 +144,38 @@ fun ConnectScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(14.dp))
                     .background(colors.bgCard)
-                    .border(1.dp, colors.borderCard, RoundedCornerShape(16.dp))
-                    .padding(20.dp)
+                    .border(1.dp, colors.borderCard, RoundedCornerShape(14.dp))
+                    .padding(18.dp)
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     // Instance URL Field
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(
                             text = "INSTANCE URL",
-                            fontSize = 11.sp,
+                            fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = colors.textMuted
+                            color = colors.textMuted,
+                            letterSpacing = 0.5.sp
                         )
                         OutlinedTextField(
                             value = state.url,
                             onValueChange = onUrlChanged,
-                            placeholder = { Text("http://192.168.1.112:4000", color = colors.textGhost) },
+                            placeholder = { Text("http://localhost:4000", color = colors.textGhost, fontSize = 13.sp) },
                             trailingIcon = {
                                 IconButton(onClick = onProbeClicked) {
                                     if (state.isProbing) {
                                         CircularProgressIndicator(
-                                            color = colors.textHeading,
-                                            modifier = Modifier.size(18.dp)
+                                            color = colors.btnPrimaryBg,
+                                            modifier = Modifier.size(16.dp)
                                         )
                                     } else {
                                         Icon(
                                             imageVector = Icons.Default.Refresh,
-                                            contentDescription = "Probe",
-                                            tint = colors.textSecondary
+                                            contentDescription = "Test connection",
+                                            tint = colors.textSecondary,
+                                            modifier = Modifier.size(16.dp)
                                         )
                                     }
                                 }
@@ -155,8 +183,8 @@ fun ConnectScreen(
                             shape = RoundedCornerShape(10.dp),
                             modifier = Modifier.fillMaxWidth(),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = colors.bgCard,
-                                unfocusedContainerColor = colors.bgCard,
+                                focusedContainerColor = colors.inputBg,
+                                unfocusedContainerColor = colors.inputBg,
                                 focusedBorderColor = colors.borderFocus,
                                 unfocusedBorderColor = colors.borderInput,
                                 focusedTextColor = colors.textHeading,
@@ -165,23 +193,31 @@ fun ConnectScreen(
                             singleLine = true
                         )
 
-                        // Quick Connection Presets (Wi-Fi LAN / USB)
+                        // Quick Connection Presets
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             ConnectionPresetPill(
-                                label = "🏠 Wi-Fi (192.168.1.112:4000)",
+                                label = "Localhost :4000",
                                 onClick = {
-                                    onUrlChanged("http://192.168.1.112:4000")
+                                    onUrlChanged("http://localhost:4000")
                                     onProbeClicked()
                                 },
                                 modifier = Modifier.weight(1f)
                             )
                             ConnectionPresetPill(
-                                label = "🔌 USB (localhost:4000)",
+                                label = "Localhost :3000",
                                 onClick = {
-                                    onUrlChanged("http://localhost:4000")
+                                    onUrlChanged("http://localhost:3000")
+                                    onProbeClicked()
+                                },
+                                modifier = Modifier.weight(1f)
+                            )
+                            ConnectionPresetPill(
+                                label = "10.0.2.2 :4000",
+                                onClick = {
+                                    onUrlChanged("http://10.0.2.2:4000")
                                     onProbeClicked()
                                 },
                                 modifier = Modifier.weight(1f)
@@ -195,10 +231,10 @@ fun ConnectScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(colors.bgPill)
-                                .border(1.dp, colors.borderSubtle, RoundedCornerShape(10.dp))
-                                .padding(12.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(colors.bgSubtle)
+                                .border(1.dp, colors.borderSubtle, RoundedCornerShape(8.dp))
+                                .padding(10.dp)
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -208,17 +244,17 @@ fun ConnectScreen(
                                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                     Text(
                                         text = "Openship v${env.version}",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 12.sp,
                                         color = colors.textHeading
                                     )
                                     Text(
                                         text = "${env.deployMode?.replaceFirstChar { it.uppercase() } ?: "Docker"} · ${env.authMode}",
                                         fontSize = 11.sp,
-                                        color = colors.textSecondary
+                                        color = colors.textMuted
                                     )
                                 }
-                                StatusBadge(text = "Online", kind = StatusKind.SUCCESS, pulseDot = true)
+                                StatusBadge(text = "Online", kind = StatusKind.SUCCESS, pulseDot = true, compact = true)
                             }
                         }
                     }
@@ -227,19 +263,20 @@ fun ConnectScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(
                             text = "SERVER LABEL",
-                            fontSize = 11.sp,
+                            fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = colors.textMuted
+                            color = colors.textMuted,
+                            letterSpacing = 0.5.sp
                         )
                         OutlinedTextField(
                             value = state.label,
                             onValueChange = onLabelChanged,
-                            placeholder = { Text("My Openship Server", color = colors.textGhost) },
+                            placeholder = { Text("Local Server", color = colors.textGhost, fontSize = 13.sp) },
                             shape = RoundedCornerShape(10.dp),
                             modifier = Modifier.fillMaxWidth(),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = colors.bgCard,
-                                unfocusedContainerColor = colors.bgCard,
+                                focusedContainerColor = colors.inputBg,
+                                unfocusedContainerColor = colors.inputBg,
                                 focusedBorderColor = colors.borderFocus,
                                 unfocusedBorderColor = colors.borderInput,
                                 focusedTextColor = colors.textHeading,
@@ -254,29 +291,31 @@ fun ConnectScreen(
                         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(
                                 text = "PERSONAL ACCESS TOKEN (PAT)",
-                                fontSize = 11.sp,
+                                fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = colors.textMuted
+                                color = colors.textMuted,
+                                letterSpacing = 0.5.sp
                             )
                             OutlinedTextField(
                                 value = state.pat,
                                 onValueChange = onPatChanged,
-                                placeholder = { Text("opsh_pat_...", color = colors.textGhost) },
+                                placeholder = { Text("opsh_pat_...", color = colors.textGhost, fontSize = 13.sp) },
                                 visualTransformation = if (showPat) VisualTransformation.None else PasswordVisualTransformation(),
                                 trailingIcon = {
                                     IconButton(onClick = { showPat = !showPat }) {
                                         Icon(
                                             imageVector = if (showPat) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                                             contentDescription = "Toggle PAT Visibility",
-                                            tint = colors.textMuted
+                                            tint = colors.textMuted,
+                                            modifier = Modifier.size(16.dp)
                                         )
                                     }
                                 },
                                 shape = RoundedCornerShape(10.dp),
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedContainerColor = colors.bgCard,
-                                    unfocusedContainerColor = colors.bgCard,
+                                    focusedContainerColor = colors.inputBg,
+                                    unfocusedContainerColor = colors.inputBg,
                                     focusedBorderColor = colors.borderFocus,
                                     unfocusedBorderColor = colors.borderInput,
                                     focusedTextColor = colors.textHeading,
@@ -292,7 +331,7 @@ fun ConnectScreen(
                         Text(
                             text = state.probeError ?: state.connectError ?: "",
                             color = colors.statusFailed,
-                            fontSize = 12.sp
+                            fontSize = 11.sp
                         )
                     }
 
@@ -302,8 +341,8 @@ fun ConnectScreen(
                         enabled = !state.isConnecting,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp),
-                        shape = RoundedCornerShape(10.dp),
+                            .height(44.dp),
+                        shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = colors.btnPrimaryBg,
                             contentColor = colors.btnPrimaryText
@@ -312,13 +351,13 @@ fun ConnectScreen(
                         if (state.isConnecting) {
                             CircularProgressIndicator(
                                 color = colors.btnPrimaryText,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(18.dp)
                             )
                         } else {
                             Text(
                                 text = "Connect Instance",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 13.sp
                             )
                         }
                     }
@@ -338,19 +377,21 @@ private fun ConnectionPresetPill(
 
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(colors.bgPill)
-            .border(1.dp, colors.borderSubtle, RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(6.dp))
+            .background(colors.bgSubtle)
+            .border(1.dp, colors.borderSubtle, RoundedCornerShape(6.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 6.dp),
+            .padding(horizontal = 6.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = label,
-            fontSize = 11.sp,
+            fontSize = 10.sp,
             fontWeight = FontWeight.Medium,
             color = colors.textSecondary,
-            fontFamily = FontFamily.Monospace
+            fontFamily = FontFamily.Monospace,
+            maxLines = 1
         )
     }
 }
+

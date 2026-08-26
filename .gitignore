@@ -30,6 +30,12 @@ node_modules/
 .env.*.local
 *.pem
 *.key
+*.jks
+*.keystore
+**/signing.properties
+**/keystore.properties
+google-services.json
+GoogleService-Info.plist
 
 # Logs
 *.log
@@ -43,3 +49,9 @@ Thumbs.db
 *.db
 .beads-credential-key
 .beads/proxieddb/
+
+# Local agent / IDE noise (keep shared skills if you want; ignore machine state)
+.claude/settings.local.json
+.opencode/
+*.hprof
+.cxx/

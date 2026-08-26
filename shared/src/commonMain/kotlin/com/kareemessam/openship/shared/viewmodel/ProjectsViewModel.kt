@@ -4,6 +4,8 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kareemessam.openship.shared.client.DeployActionsRepository
+import com.kareemessam.openship.shared.client.McpConnectionManager
+import com.kareemessam.openship.shared.client.McpState
 import com.kareemessam.openship.shared.client.ProjectsRepository
 import com.kareemessam.openship.shared.model.InstanceConfig
 import com.kareemessam.openship.shared.model.ProjectSummary
@@ -33,7 +35,8 @@ data class ProjectsUiState(
 class ProjectsViewModel(
     private val projectsRepository: ProjectsRepository,
     private val tokenStorage: TokenStorage,
-    private val deployActionsRepository: DeployActionsRepository
+    private val deployActionsRepository: DeployActionsRepository,
+    private val mcpConnectionManager: McpConnectionManager
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ProjectsUiState())
@@ -41,6 +44,13 @@ class ProjectsViewModel(
 
     init {
         loadInstancesAndProjects()
+        // MCP connect finishes asynchronously after first composition — re-check
+        // tool availability once the catalog is populated (also covers foreground reconnect).
+        viewModelScope.launch {
+            mcpConnectionManager.connectionState.collect { state ->
+                if (state == McpState.Connected) refreshRedeployAvailability()
+            }
+        }
     }
 
     fun loadInstancesAndProjects() {

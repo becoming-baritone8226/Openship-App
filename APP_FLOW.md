@@ -69,10 +69,10 @@ The first screen users see. Connects to any self-hosted Openship instance.
 │  │                                                          │  │
 │  │  INSTANCE URL                                            │  │
 │  │  ┌────────────────────────────────────────────┐ ┌──────┐ │  │
-│  │  │ http://192.168.1.112:4000                  │ │  🔄  │ │  │
+│  │  │ http://<lan-ip>:4000                  │ │  🔄  │ │  │
 │  │  └────────────────────────────────────────────┘ └──────┘ │  │
 │  │                                                          │  │
-│  │  [ 🏠 Wi-Fi (192.168.1.112:4000) ] [ 🔌 USB (localhost) ]│  │
+│  │  [ 🏠 Wi-Fi (<lan-ip>:4000) ] [ 🔌 USB (localhost) ]│  │
 │  │                                                          │  │
 │  │  ┌────────────────────────────────────────────────────┐  │  │
 │  │  │ Openship v0.6.7 · Docker · none    [ 🟢 Online ]  │  │  │
