@@ -2,10 +2,10 @@
   <img src="screenshots/logo.png" alt="OpenShip Logo" width="240" height="240" />
 </p>
 
-<h1 align="center">OpenShip Android</h1>
+<h1 align="center">OpenShip Mobile</h1>
 
 <p align="center">
-  <strong> Unofficial Android client for  <a href="https://github.com/oblien/openship">Openship</a> — the open-source, self-hostable deployment platform.</strong>
+  <strong> Unofficial mobile client for  <a href="https://github.com/oblien/openship">Openship</a> — the open-source, self-hostable deployment platform. Android today; iOS is an upcoming phase on the same Kotlin Multiplatform core.</strong>
 </p>
 
 <p align="center">
@@ -43,7 +43,7 @@
 | **Redeploy & rollback** | MCP-backed write actions with confirmation; degrades to read-only if MCP/tools unavailable. |
 | **Theme** | Dark / light, aligned with Openship dashboard tokens. |
 
-**Platform today:** Android (minSdk 24). Architecture is Kotlin Multiplatform + Compose Multiplatform so iOS can be added later.
+**Platform today:** Android (minSdk 24). This is a **Kotlin Multiplatform** project — all networking, models, ViewModels, and UI live in the shared `:shared` module; only platform plumbing (keystore, OkHttp engine) is Android-specific. **iOS is an upcoming phase**: the architecture already preserves it, and adding an `iosMain` target requires no rewrite of the shared code.
 
 ## Requirements
 
@@ -147,7 +147,8 @@ Deeper notes for contributors and agents: [CONTRIBUTING.md](CONTRIBUTING.md), [A
 | **v0.1** | Connect, projects, live logs, monitor | Done |
 | **v0.2** | MCP foundation, deployment history, redeploy, rollback | Done |
 | Next | Service controls, env vars, domains (deferred until write paths stay safe) | Planned |
-| Later | Push notifications, iOS target, broader MCP surface | Planned |
+| Upcoming phase | **iOS target** — same shared KMP code, new `iosMain` platform layer | Planned |
+| Later | Push notifications, broader MCP surface | Planned |
 
 API shapes can change with Openship releases. The client uses tolerant JSON (`ignoreUnknownKeys`) and runtime MCP tool discovery; still, pin/test against the Openship version you run.
 
