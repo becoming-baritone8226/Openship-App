@@ -5,7 +5,7 @@
 <h1 align="center">OpenShip Mobile</h1>
 
 <p align="center">
-  <strong> Unofficial mobile client for  <a href="https://github.com/oblien/openship">Openship</a> — the open-source, self-hostable deployment platform. Android today; iOS is an upcoming phase on the same Kotlin Multiplatform core.</strong>
+  <strong>Unofficial mobile client for <a href="https://github.com/oblien/openship">Openship</a> — the open-source, self-hostable deployment platform. Android today, iOS next — one Kotlin Multiplatform codebase.</strong>
 </p>
 
 <p align="center">
@@ -55,7 +55,7 @@
 ## Quick start
 
 ```bash
-git clone https://github.com/<you>/Openship-App.git
+git clone https://github.com/kareemessam09/Openship-App.git
 cd Openship-App
 ./gradlew :androidApp:assembleDebug
 ./gradlew :androidApp:installDebug   # device or emulator
