@@ -68,6 +68,7 @@ cd Openship-App
 3. In the app:
    - **Emulator:** `http://10.0.2.2:4000` (host loopback)
    - **USB device:** app install runs `adb reverse` for ports `4000` / `20000`, or use your LAN IP
+   - **Sideloaded APKs** (installed outside Gradle) don't get this: run `adb reverse tcp:4000 tcp:4000` manually, or use `http://<lan-ip>:4000`. Reverse rules are also cleared whenever USB reconnects.
    - **Wi‑Fi device:** `http://<your-machine-lan-ip>:4000`
 
 Cleartext HTTP is allowed for local/LAN self-hosting via `network_security_config.xml`. Prefer HTTPS for anything beyond your network.
