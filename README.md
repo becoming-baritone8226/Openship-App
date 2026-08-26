@@ -2,7 +2,7 @@
   <img src="screenshots/logo.png" alt="OpenShip Logo" width="240" height="240" />
 </p>
 
-<h1 align="center">OpenShip Mobile</h1>
+<h1 align="center">Openship Mobile</h1>
 
 <p align="center">
   <strong>Unofficial mobile client for <a href="https://github.com/oblien/openship">Openship</a> — the open-source, self-hostable deployment platform. Android today, iOS next — one Kotlin Multiplatform codebase.</strong>
