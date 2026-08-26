@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="screenshots/logo.png" alt="OpenShip Logo" width="84" height="84" />
+  <img src="screenshots/logo.png" alt="OpenShip Logo" width="240" height="240" />
 </p>
 
 <h1 align="center">OpenShip Android</h1>

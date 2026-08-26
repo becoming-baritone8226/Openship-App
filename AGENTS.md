@@ -8,7 +8,7 @@
 **Openship-App** is an unofficial Android client for [Openship](https://github.com/oblien/openship), the open-source self-hostable deployment platform. Built with Kotlin Multiplatform (KMP) and Compose Multiplatform, using the **Model Context Protocol (MCP)** as the primary API layer and **Server-Sent Events (SSE)** for real-time streaming.
 
 - **License**: Apache-2.0
-- **Status**: v0.1 read-only complete; v0.2 MCP redeploy/rollback complete. Unofficial community client.
+- **Status**: v0.1 read-only complete; v0.2 MCP redeploy/rollback complete; release packaging done (R8 minified per-ABI APKs). Unofficial community client.
 - **Relationship**: Unofficial community client for [Openship](https://github.com/oblien/openship) — not affiliated unless upstream says otherwise
 
 ## Architecture & Protocol Strategy
@@ -49,8 +49,8 @@ androidApp/ (Android only)          shared/ (KMP)
 | compileSdk / targetSdk | 36 | ✅ Configured |
 | minSdk | 24 | ✅ Configured |
 | JDK toolchain | 21 (Zulu) | ✅ Configured |
-| Ktor Client | 3.1.1 | ✅ Configured & Active |
-| kotlinx.serialization | 1.8.0 | ✅ Configured & Active |
+| Ktor Client | 3.5.2 | ✅ Configured & Active (core + OkHttp engine + SSE + ContentNegotiation + logging) |
+| kotlinx.serialization | 1.11.0 | ✅ Configured & Active |
 | Kotlin MCP SDK Client | 0.15.0 | ✅ Configured (Phase 2) |
 | Koin | 4.0.2 | ✅ Configured & Active |
 | AndroidX Security Crypto | 1.1.0-alpha06 | ✅ Configured & Active |
@@ -203,8 +203,16 @@ val json = Json {
 # Build debug APK
 ./gradlew :androidApp:assembleDebug
 
-# Install on connected device
+# Install on connected device (auto-runs reverseAdbPorts: adb reverse 4000/20000)
 ./gradlew :androidApp:installDebug
+
+# Release build — R8 minified + resource shrinking + per-ABI splits (~4.7MB each:
+# armeabi-v7a, arm64-v8a, x86, x86_64). Output: androidApp/build/outputs/apk/release/
+./gradlew :androidApp:assembleRelease
+
+# Optional release signing via env vars (else unsigned APKs):
+#   OPENSHIP_STORE_FILE / OPENSHIP_STORE_PASSWORD / OPENSHIP_KEY_ALIAS / OPENSHIP_KEY_PASSWORD
+# Debug builds get applicationIdSuffix ".debug" so debug & release can coexist.
 
 # Check project health
 ./gradlew :androidApp:check
@@ -223,13 +231,12 @@ val json = Json {
 
 ### When Adding Features
 1. Add models to `shared/commonMain/model/` first
-2. Add/extend repository in `shared/commonMain/repository/`
-3. Add networking client code in `shared/commonMain/client/`
+2. Add networking client code in `shared/commonMain/client/`
+3. Add ViewModel in `shared/commonMain/viewmodel/`
 4. Add platform-specific code in `shared/androidMain/platform/`
-5. Add ViewModel in `androidApp/`
-6. Add Compose screen in `androidApp/`
-7. Wire DI in `androidApp/di/`
-8. Add tests in `shared/commonTest/` or `androidApp/test/`
+5. Add Compose screen in `shared/commonMain/ui/screens/`
+6. Wire DI in `shared/commonMain/di/SharedModules.kt`
+7. Add tests in `shared/commonTest/` or `androidApp/test/`
 
 ### Common Pitfalls
 - **Don't use native `EventSource`** — it can't set `Authorization` headers. Use Ktor SSE plugin.
@@ -239,18 +246,7 @@ val json = Json {
 - **Handle CLOUD_MODE** — monitoring SSE 404s in cloud mode. Hide monitor tab for cloud instances.
 - **Use `ignoreUnknownKeys = true`** — Openship API has no versioning. Tolerate unknown fields.
 - **Cleartext traffic** — self-hosted Openship on LAN needs `networkSecurityConfig` with cleartext permit.
-
-### Dependencies Not Yet Added
-The following are planned but not yet in `gradle/libs.versions.toml`:
-- Ktor Client 3.5.2 (core + OkHttp engine + SSE plugin + serialization)
-- kotlinx.serialization 1.11.0
-- Kotlin MCP SDK Client 0.15.0
-- Koin 4.x (core + android + compose)
-- AndroidX Security 1.1.0-alpha06 (EncryptedSharedPreferences)
-- OkHttp 4.12.x
-- Navigation Compose 2.8.x
-
-When adding these, update `gradle/libs.versions.toml` first, then reference in the appropriate `build.gradle.kts`.
+- **MCP-dependent UI gating is async** — MCP connect finishes after first composition. Anything gated on the tool catalog (e.g. redeploy button via `DeployActionsRepository.isRedeployAvailable()`) must re-check when `McpConnectionManager.connectionState` becomes `Connected`; a one-shot check at ViewModel init races the connect and silently hides the feature (this shipped as a real bug in minified release builds — release is just fast enough to lose the race every time).
 
 ## References
 

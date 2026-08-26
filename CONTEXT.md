@@ -9,8 +9,8 @@ This file is the single source of truth and comprehensive working handoff for th
 - **App Name**: Openship-App
 - **Package**: `com.kareemessam.openship`
 - **Platform**: Android (Kotlin Multiplatform Compose architecture designed for future iOS expansion)
-- **Status**: **Phase 2 In Progress — MCP Foundation + redeploy & rollback write actions complete (dep alignment, client wrapper, tool discovery, deployment history, redeploy, rollback). Next: deferred slices (service controls, env vars). Base Version v0.1.0 (Slices 1 to 4) remains 100% Completed & Verified on Device `SM-A556E`.**
-- **Last Updated**: 2026-08-24 (Local Time)
+- **Status**: **Phase 2 Complete — v0.1 read-only (Slices 1–4) + v0.2 MCP redeploy & rollback shipped; release packaging done (R8 minified per-ABI APKs, ~4.7MB) and verified on device `SM-A556E`. MCP-dependent UI gating now reacts to connection state (redeploy-button race fixed in minified release). Next: deferred slices (service controls, env vars).**
+- **Last Updated**: 2026-08-26 (Local Time)
 
 ---
 
@@ -47,6 +47,8 @@ This file is the single source of truth and comprehensive working handoff for th
 | Deployment history for rollback selection | `Openship-App-6lo.1` | ✅ Closed — `DeploymentsRepository` (REST history fetch, sorted newest-first), `DeploymentHistoryViewModel` (load/select/eligibility), `DeploymentHistoryScreen` (status badge, commit, age, rollback-eligible indicator), 11 unit tests green. |
 | Existing-project redeploy action | `Openship-App-6lo.6` | ✅ Closed — `DeployActionsRepository` (MCP redeploy wrapper, availability gating, deployment-id extraction), `ProjectsViewModel` redeploy state (confirm/loading/error/result), `ProjectCard` redeploy button, `ProjectsScreen` confirmation dialog + log navigation, `AppNavHost` + `MainDashboardScreen` wiring, 15 unit tests green. |
 | Rollback selected deployment | `Openship-App-6lo.2` | ✅ Closed — `DeployActionsRepository.rollback` + `isRollbackAvailable`, `DeploymentHistoryViewModel` rollback state machine (target/loading/error/result), `RollbackConfirmDialog` (target commit+age+active-deployment warning), `ProjectCard` history button, `Screen.DeploymentHistory` route + `AppNavHost` wiring (projects → history → logs on success), 10 new unit tests green. |
+| Release packaging (R8 + ABI splits) | — | ✅ Done — `assembleRelease`: `minifyEnabled`+`shrinkResources`, per-ABI splits (armeabi-v7a/arm64-v8a/x86/x86_64, ~4.7MB each), per-ABI versionCode (`base*10 + abiCode`), optional signing via `OPENSHIP_STORE_*` env vars, debug `.debug` appId suffix. ProGuard rules for MCP SDK/kotlinx.serialization/coroutines in `androidApp/proguard-rules.pro`. |
+| Redeploy availability race fix | — | ✅ Done — minified release hid the redeploy button: `refreshRedeployAvailability()` at ViewModel init raced the async MCP connect and always lost in release timing. Fix: `ProjectsViewModel` now injects `McpConnectionManager` and re-checks availability whenever `connectionState` becomes `Connected` (also covers foreground reconnect). Verified on device; tests green. |
 | Service controls | `Openship-App-6lo.4` | ❄ Deferred — until deploy/rollback proven; restart must handle `SERVICE_CONFIG_STALE`. |
 | Environment variable management | `Openship-App-6lo.8` | ❄ Deferred — masked secrets + merge semantics need a safety pass. |
 | Domains read-only surface | `Openship-App-6lo.5` | ❄ Deferred (P3). |
@@ -154,6 +156,7 @@ Openship-App/
         │   ├── DeployLogsRepository.kt       # Live SSE streaming from /api/deployments/:id/stream
         │   ├── MonitorRepository.kt          # Queries /api/system/servers & streams /api/system/monitor/stream
         │   ├── McpClient.kt                  # Phase 2 MCP wrapper: connect/list/call/resolve + McpTools constants
+        │   ├── McpConnectionManager.kt       # Singleton MCP connection lifecycle: StateFlow<McpState>, connectActive()/disconnect()
         │   ├── DeploymentsRepository.kt      # Phase 2 REST deployment history fetch (sorted newest-first)
         │   └── DeployActionsRepository.kt    # Phase 2 MCP write actions: redeploy + rollback (cancel deferred)
         ├── shared/model/
@@ -164,7 +167,7 @@ Openship-App/
         │   └── sse/DeployStreamEvent.kt      # SSE polymorphic event serialization
         ├── shared/viewmodel/
         │   ├── ConnectViewModel.kt           # Instance discovery & PAT persistence
-        │   ├── ProjectsViewModel.kt          # Filtering, instance switching, pull-to-refresh, MCP redeploy action
+        │   ├── ProjectsViewModel.kt          # Filtering, instance switching, pull-to-refresh, MCP redeploy action; availability re-check on McpState.Connected
         │   ├── DeployLogsViewModel.kt        # Terminal streaming, ANSI parsing, search, build stages
         │   ├── MonitorViewModel.kt           # Live 3s telemetry, 30-sample rolling sparkline history
         │   └── DeploymentHistoryViewModel.kt # Phase 2 deployment history list + rollback eligibility + rollback action state
@@ -214,6 +217,7 @@ Openship-App/
 
 - **Unit & Compilation Tests**: `./gradlew :shared:testAndroidHostTest` runs 58 tests across 10 suites with 0 failures, 0 errors, 0 skipped. Suites: `McpClientTest` (9), `DeployActionsRepositoryTest` (13), `DeploymentsRepositoryTest` (3), `DeploymentHistoryViewModelTest` (14), `ProjectsViewModelRedeployTest` (6), `DiscoveryServiceTest` (1), `HealthEnvTest` (2), `AnsiParserTest` (3), `Base64DecoderTest` (4), `SeqTrackerTest` (3).
 - **Compilation**: `./gradlew :shared:compileAndroidMain` clean with MCP SDK 0.15.0 + redeploy/rollback/history wiring + DeploymentHistory nav route.
+- **Release build**: `./gradlew :shared:allTests :androidApp:assembleRelease` — BUILD SUCCESSFUL; arm64-v8a release APK signed with a local keystore and installed on `SM-A556E`; dashboard, project card, and deployment detail screens verified after the redeploy-availability race fix.
 - **Physical Device Tests**: Verified on physical device **Samsung Galaxy A55 5G (`SM-A556E`)** running Android 14/15.
   - Multi-instance connection probe: **PASSED**
   - Project listing & framework squircle rendering: **PASSED**
@@ -221,3 +225,9 @@ Openship-App/
   - Real-time 3-second server telemetry stream & circular gauges: **PASSED**
   - Dark/Light Theme dynamic switching: **PASSED**
   - Custom launcher adaptive icon & in-app branding: **PASSED**
+  - Minified release (R8) install & launch: **PASSED**; redeploy-button race fix applied and rebuilt — confirm the button shows on the Projects card during next device run.
+
+### Release Engineering Notes
+- `assembleRelease` produces unsigned per-ABI APKs at `androidApp/build/outputs/apk/release/` unless all four `OPENSHIP_STORE_*` env vars are set (then signed automatically).
+- To sideload for testing: sign with `apksigner` using any keystore, `adb install -r`, then `adb reverse tcp:4000 tcp:4000 && adb reverse tcp:20000 tcp:20000` (localhost instances need the reverse; LAN-IP instances do not).
+- R8 emits benign "error parsing kotlin metadata" warnings (R8 older than Kotlin 2.4.10) — harmless, build succeeds.
